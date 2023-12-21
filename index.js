@@ -42,13 +42,12 @@ let mainWindow = undefined;
 Menu.setApplicationMenu(null);
 
 const indexFilePath = path.resolve(path.join(appPath,distPath));
-const mainProcessPath = path.resolve('processes',"main","index.js");
+const mainProcessPath = path.join('processes',"main","index.js");
 const mainProcessIndex = fs.existsSync(path.resolve(appPath,mainProcessPath)) && path.resolve(appPath,mainProcessPath);
 const mainProcessRequired = mainProcessIndex && require(`${mainProcessIndex}`);
 //pour étendre les fonctionnalités au niveau du main proceess, bien vouloir écrire dans le fichier ../electron/main/index.js
 const mainProcess = mainProcessRequired && typeof mainProcessRequired =='object'? mainProcessRequired : {};
 const execPath = app.getPath ('exe') || process.execPath;
-
 // Gardez une reference globale de l'objet window, si vous ne le faites pas, la fenetre sera
 if(!isValidUrl(pUrl) && !fs.existsSync(indexFilePath)){
   throw {message:`Unable to start the application: index file located at [${indexFilePath}] does not exists : appPath = [${appPath}], exec path is ${execPath}`}
@@ -193,16 +192,18 @@ function createWindow () {
         if(typeof mainProcess.onMainWindowReadyToShow ==='function'){
             mainProcess.onMainWindowReadyToShow(mainWindow);
         }
-        mainWindow.minimize();
-        mainWindow.restore();
         try {
           if(splash && splash instanceof BrowserWindow){
-            const splashTimeout = typeof mainProcess.splashTimeout =="number" ? mainProcess.splashTimeout : 3000;
+            const splashTimeout = typeof mainProcess.splashTimeout =="number" ? mainProcess.splashTimeout : 2000;
             setTimeout(()=>{
               splash.destroy();
+              mainWindow.minimize();
+              mainWindow.restore();
               mainWindow.show();
             },splashTimeout);
           } else {
+            mainWindow.minimize();
+            mainWindow.restore();
             mainWindow.show();
           }
         } catch{ }

@@ -42,7 +42,7 @@ module.exports = {
         return null;
     },
     /*** le délai d'affichage du splashScreen lorsqeu celui ci est définit */
-    splashTimeout : 3000,
+    splashTimeout : 2000,
     /*** this function is called when app is ready 
         toggleDevTools : {function},la fonction permettant de toggle les outils de developements
         browserWindow|mainWindow : {BrowserWindow}, le browser window principal de l'application

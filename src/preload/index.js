@@ -533,7 +533,7 @@ process.once('loaded', () => {
     contextBridge.exposeInMainWorld('ELECTRON',ELECTRON);
 });
 
-const mainRendererPath = path.resolve('processes',"renderer","index.js");
+const mainRendererPath = path.join('processes',"renderer","index.js");
 const rendererProcessIndex = projectRoot && fs.existsSync(path.resolve(projectRoot,mainRendererPath)) && path.resolve(projectRoot,mainRendererPath);
 //pour étendre les fonctionnalités au niveau du renderer proceess, bien vouloir écrire dans le fichier projectRoot/electron/processes/renderer/index.js
 // dans lequel exporter une fonction prenant en paramètre l'objet electron, que l'on peut étendre et le rendre accessible depuis l'application
