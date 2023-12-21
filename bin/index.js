@@ -2,6 +2,9 @@
 const path= require("path");
 const fs = require("fs");
 const  {createDir,electronDir,copy,exec,throwError,writeFile,isValidUrl} = require("../src/utils");
+const { program } = require('commander');
+const projectRoot = path.resolve(process.cwd());
+const dir = path.resolve(__dirname);
 
 const supportedFrameworks = {
     expo : {
@@ -35,7 +38,7 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
         throwError(`Invalid project root ${projectRoot}; project root must be different to ${dir}`);
     }
     const frameworkObj = supportedFrameworks[framework];
-    const isElectionInitialized = require("../electron/is-initialized")(electronProjectRoot);
+    const isElectionInitialized = require("./is-initialized")(electronProjectRoot);
     process.env.isElectron = true;
     process.env.isElectronScript = true;
     const buildOutDir = path.resolve(electronProjectRoot,"dist");

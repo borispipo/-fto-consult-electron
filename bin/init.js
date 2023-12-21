@@ -1,7 +1,7 @@
 const path= require("path");
 const fs = require("fs");
 const {exec,createDir,writeFile,copy} = require("../src/utils");
-const electronDir = path.resolve("../src");
+const electronDir = path.resolve(__dirname,"..","src");
 const processesDir = path.resolve(electronDir,"processes");
 const createIndexFile = require("./create-index-file");
 const appSuffix = "-desk";
@@ -21,7 +21,7 @@ module.exports = ({projectRoot,electronProjectRoot,icon})=>{
         const dependencies = {}
         const electronProjectRootPackage = path.resolve(electronProjectRoot,"package.json");
         projectRootPackage.main = `index.js`;
-        projectRootPackage.dependencies = Object.assign(electronPackageJSON.dependencies);
+        projectRootPackage.dependencies = Object.assign({},electronPackageJSON.dependencies);
         projectRootPackage.dependencies[mainPackage.name] = mainPackage.version;
         projectRootPackage.devDependencies = Object.assign({},electronPackageJSON.devDependencies);
         projectRootPackage.scripts = {
@@ -51,10 +51,10 @@ module.exports = ({projectRoot,electronProjectRoot,icon})=>{
         const mainFolderIndex = path.resolve(mainFolder,"index.js");
         const rendererFolderIndex = path.resolve(rendererFolder,"index.js");
         if(!fs.existsSync(mainFolderIndex)){
-            copy(path.resolve(processesDir,"init","main.js"),mainFolderIndex);
+            copy(path.resolve(processesDir,"main.js"),mainFolderIndex);
         }
         if(!fs.existsSync(rendererFolderIndex)){
-            copy(path.resolve(processesDir,"init","renderer.js"),rendererFolderIndex);
+            copy(path.resolve(processesDir,"renderer.js"),rendererFolderIndex);
         }
         createIndexFile(electronProjectRoot);
         /**** copying all electron utils files */

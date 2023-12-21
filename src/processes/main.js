@@ -49,7 +49,5 @@ module.exports = {
     /*** exécutée une fois que la fonction createWindow est appelée pour créer le main Browser window de l'application
         @param {InstanceOf BrowserWindow} mainBrowserWindow
     */
-    onCreateMainWindow : function(mainBrowserWindow){
-    
-    }
+    onCreateMainWindow : function(mainBrowserWindow){}
 }
