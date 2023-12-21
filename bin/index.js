@@ -81,7 +81,7 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
         cmd = `electron "${electronProjectRoot}"  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
           exec({
             cmd, 
-            projectRoot : electronProjectRoot,
+            projectRoot,
           }).finally(()=>{
             console.log("ant to exit");
           })
