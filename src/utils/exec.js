@@ -16,7 +16,6 @@ const _exec = (cmd,cmdOpts,logMessages,sync)=>{
             clearInterval(timer);
             throw e;
         }
-        return null;
     }
     return new Promise((resolve,reject)=>{
         exec(cmd,cmdOpts, (error, stdout, stderr) => {

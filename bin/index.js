@@ -63,7 +63,7 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
     
     if(!isElectionInitialized || script =='init'){
         if(script !=='init'){
-            console.log("initializing electron application before ....");
+            console.log("initializing application ....");
         }
         return require("./init")({
            projectRoot,
@@ -89,7 +89,7 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
       })
     };
     if(url){
-      return start().then(process.exit);
+      return start()//.then(process.exit);
     }
     const promise = new Promise((resolve,reject)=>{
       const next = ()=>{

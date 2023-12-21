@@ -123,7 +123,7 @@ function createBrowserWindow (options){
         window = null;
     });
     window.webContents.on('context-menu',clipboadContextMenu);
-    const url = isValidUrl(options.loadURL) || typeof options.loadURL ==='string' && options.loadURL.trim().startsWith("file://") ? options.loadURL : undefined;
+    const url = isValidUrl(options.url) || typeof options.url ==='string' && options.url.trim().startsWith("file://") ? options.url : undefined;
     if(url){
       window.loadURL(url);
     } else if(options.file && fs.existsSync(path.resolve(options.file))){
@@ -150,7 +150,7 @@ function createWindow () {
     // Créer le browser window
     mainWindow = createBrowserWindow({
       showOnLoad : false,
-      loadURL : pUrl,
+      url : pUrl,
       isMainWindow : true,
       registerDevToolsCommand : false,
       preload : path.resolve(__dirname,"src",'preload',"index.js"),
@@ -546,16 +546,18 @@ app.on('window-all-closed', () => {
 
 const nodeProcessIDsessionName = "node-process-id";
 
+function isPrevProcessRunning(){
+  const processId = session.get(nodeProcessIDsessionName);
+  try {
+    if(processId){
+      return process.kill(processId,0)
+    }
+  } catch (e) {return e.code === 'EPERM';}
+}
+
 if(mainProcess.enableSingleInstance !== false){
-    const processId = session.get(nodeProcessIDsessionName);
-    let isRunning = false;
-    try {
-      if(processId){
-        isRunning = process.kill(processId,0)
-      }
-    } catch (e) {isRunning = e.code === 'EPERM';}
     const gotTheLock = app.requestSingleInstanceLock()
-    if (isRunning && !gotTheLock) {  
+    if (!gotTheLock) {  
         quit();
     } else {
       app.on('second-instance', (event, commandLine, workingDirectory) => {
@@ -565,7 +567,7 @@ if(mainProcess.enableSingleInstance !== false){
             if (mainWindow.isMinimized()) mainWindow.restore()
             mainWindow.focus()
         }
-      })
+      });
     }
     if(currentProcessId){
         session.set(nodeProcessIDsessionName,currentProcessId);
