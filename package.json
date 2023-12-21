@@ -1,0 +1,27 @@
+{
+  "name": "@fto-consult/expo-ui-electron",
+  "version": "1.0.0",
+  "description": "Utilitaire permettant de préparer l'application electron/desktop, preconstruit à l'aide du framework @fto-consult/expo-ui",
+  "main": "index.js",
+  "bin": {
+    "expo-ui-electron": "bin/index.js"
+  },
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "electron",
+    "@fto-consult/expo-ui",
+    "desktop",
+    "app"
+  ],
+  "author": "Boris Fouomene",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^11.1.0",
+    "conf": "^10.2.0",
+    "fs-extra": "^11.2.0",
+    "node-machine-id": "^1.1.12",
+    "node-sqlite": "^0.0.2-security"
+  }
+}
