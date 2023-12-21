@@ -24,9 +24,9 @@ const distPath = path.join("dist",'index.html');
 const processCWD = process.cwd();
 const appPath = app.getAppPath();
 const isAsar = appPath.indexOf('app.asar') !== -1;
-const packageJSONPath = fs.existsSync(path.resolve(appPath,"package.app.json")) ? path.resolve(appPath,"package.app.json") : fs.existsSync(processCWD,"package.json")? path.resolve(processCWD,"package.json") : path.resolve(appPath,"package.json") ;
+const packageJSONPath = fs.existsSync(path.resolve(appPath,"package.json")) ? path.resolve(appPath,"package.json") : fs.existsSync(processCWD,"package.json")? path.resolve(processCWD,"package.json") : path.resolve(appPath,"package.json") ;
 const packageJSON = fs.existsSync(packageJSONPath) ? Object.assign({},require(`${packageJSONPath}`)) : {};
-const appName = typeof packageJSON.name =="string" && packageJSON.name || "";  
+const appName = typeof packageJSON.realAppName =="string" && packageJSON.realAppName || typeof packageJSON.name =="string" && packageJSON.name || "";  
 
 let iconPath = icon && typeof icon =="string" && fs.existsSync(path.resolve(icon)) && path.resolve(icon) || undefined; 
 if(!iconPath && packageJSON.icon && typeof packageJSON.icon ==="string" && fs.existsSync(path.resolve(packageJSON.icon))){

@@ -56,13 +56,6 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
     let cmd = undefined;
     icon = icon && typeof icon =="string" && fs.existsSync(path.resolve(icon)) && icon || undefined;
     require("./create-index-file")({electronProjectRoot,appName:packageObj.name,icon});
-    if(fs.existsSync(electronProjectRoot)){
-      const mainPackagePath = path.resolve(electronProjectRoot,"package.app.json");
-      try {
-        const mainPackageAppJSON = fs.existsSync(mainPackagePath)? require(mainPackagePath) : {};
-        writeFile(mainPackagePath,JSON.stringify({...packageObj,...mainPackageAppJSON,name:packageObj.name,icon:icon||mainPackageAppJSON.icon||undefined},null,"\t"));
-      } catch{}
-    }
     const isInitScript = script =='init';
     let initPromise = undefined;
     if(!isElectionInitialized || isInitScript){
