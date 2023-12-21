@@ -193,17 +193,19 @@ function createWindow () {
         if(typeof mainProcess.onMainWindowReadyToShow ==='function'){
             mainProcess.onMainWindowReadyToShow(mainWindow);
         }
-        mainWindow.minimize()
+        mainWindow.minimize();
+        mainWindow.restore();
         try {
           if(splash && splash instanceof BrowserWindow){
             const splashTimeout = typeof mainProcess.splashTimeout =="number" ? mainProcess.splashTimeout : 3000;
             setTimeout(()=>{
               splash.destroy();
+              mainWindow.show();
             },splashTimeout);
+          } else {
+            mainWindow.show();
           }
         } catch{ }
-        mainWindow.restore();
-        mainWindow.show();
     })    
    
     mainWindow.on('close', (e) => {
