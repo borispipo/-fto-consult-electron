@@ -60,17 +60,19 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
         writeFile(mainPackagePath,JSON.stringify({...packageObj,...mainPackageAppJSON,name:packageObj.name,icon:icon||mainPackageAppJSON.icon||undefined},null,"\t"));
       } catch{}
     }
-    
-    if(!isElectionInitialized || script =='init'){
-        if(script !=='init'){
+    const isInitScript = script =='init';
+    let initPromise = undefined;
+    if(!isElectionInitialized || isInitScript){
+        if(!isInitScript){
             console.log("initializing application ....");
         }
-        return require("./init")({
+        initPromise =  require("./init")({
            projectRoot,
            electronDir,
            electronProjectRoot,
            icon,
         });
+        if(isInitScript) return initPromise;
     }
     const outDir = out && path.dirname(out) && path.resolve(path.dirname(out),"electron") || path.resolve(electronProjectRoot,"bin")
     if(!createDir(outDir)){
@@ -78,14 +80,14 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
     }
     const start = x=>{
        return new Promise((resolve,reject)=>{
-        cmd = `electron "${electronProjectRoot}"  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
-          exec({
-            cmd, 
-            projectRoot,
-          }).finally(()=>{
-            console.log("ant to exit");
+          return Promise.resolve(initPromise).finally(()=>{
+            cmd = `electron "${electronProjectRoot}"  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
+            exec({
+              cmd, 
+              projectRoot,
+            });
+            setTimeout(resolve,1000);
           })
-          typeof (resolve) =='function' && setTimeout(resolve,1000);
       })
     };
     if(url){
@@ -114,7 +116,7 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
         next();
       }
     });
-    return promise.then(()=>{
+    return Promise.all([Promise.resolve(initPromise),promise]).then(()=>{
       if(!fs.existsSync(buildOutDir) || !fs.existsSync(indexFile)){
          throwError("répertoire d'export web invalide où innexistant ["+buildOutDir+"]");
       }
