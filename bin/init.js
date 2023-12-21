@@ -75,16 +75,3 @@ module.exports = ({projectRoot,electronProjectRoot,icon})=>{
         });
     })
 }
-
-const copyExtra = (path2)=>{
-    fs.readdirSync(path2).forEach((file) => {
-        if(!file || file.toLowerCase() =="dist") return;
-        file = path.join(path2,file);
-        const stat = fs.statSync(file);
-        if(stat.isDirectory()){
-            return copyExtra(file);
-        }
-        if(!stat.isFile() || file === indexFile) return;
-        extraResource.push(file);
-    });
-}

@@ -27,7 +27,10 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
   .option('-i, --import [boolean]', 'la commande d\'initialisation du package electron forge, utile pour le packaging de l\'application. Elle permet d\'exécuter le cli electron package, pour l\'import d\'un projet existant. Commande package. exemple : expo-ui electron package --import')
   .option('-f, --framework [frameworkName]', `Le nom du framework utilisé pour générer l\'application electron. Les frameworks supportés sont pour l\'instant : [${Object.keys(supportedFrameworks)}]. Le framework [expo] est le framework par défaut`)
 
-  .action((script, options) => {
+  program.parse();
+  
+  const script = program.args[0];
+  const options = program.opts();
     const electronProjectRoot = path.resolve(projectRoot,"electron");
     const opts = Object.assign({},typeof options.opts =='function'? options.opts() : options);
     let {out,arch,url,build,platform,import:packageImport,icon,framework} = opts;
@@ -81,17 +84,16 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
     const start = x=>{
        return new Promise((resolve,reject)=>{
           return Promise.resolve(initPromise).finally(()=>{
-            cmd = `electron "${path.resolve(electronProjectRoot,"index.js")}"  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
-            exec({
+            cmd = `electron "${electronProjectRoot}"  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
+            return exec({
               cmd, 
-              electronProjectRoot,
-            });
-            setTimeout(resolve,1000);
+              projectRoot:electronProjectRoot,
+            }).then(resolve).catch(reject);
           })
       })
     };
     if(url){
-      return start()//.then(process.exit);
+      return start();
     }
     const promise = new Promise((resolve,reject)=>{
       const next = ()=>{
@@ -116,16 +118,13 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
         next();
       }
     });
-    return Promise.all([Promise.resolve(initPromise),promise]).then(()=>{
+    Promise.all([Promise.resolve(initPromise),promise]).then(()=>{
       if(!fs.existsSync(buildOutDir) || !fs.existsSync(indexFile)){
          throwError("répertoire d'export web invalide où innexistant ["+buildOutDir+"]");
       }
       switch(script){
           case "start":
              return start();
-            break;
-          case "build":
-            break;
           case "package" :
             if(packageImport || opts.import){ //on importe le projet existant electron forge, @see : https://www.electronforge.io/import-existing-project
               console.log("importing electron forge existing project....");
@@ -157,9 +156,8 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
     }).catch((e)=>{
       console.log(e," is cathing ggg");
     }).finally(()=>{
-      process.exit();
+      if(script !=="start"){
+        process.exit();
+      }
     });
-
-  });
   
-  program.parse();
