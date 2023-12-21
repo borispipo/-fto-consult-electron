@@ -1,5 +1,6 @@
 
-const {createDir,isDataURL,postMessage,isBase64,Config,uniqid} = require("../utils");
+const {createDir,isDataURL,postMessage,isBase64,uniqid} = require("../utils");
+const Config = require("../utils/config");
 const { contextBridge, ipcRenderer, shell } = require('electron')
 const appInstance = require("./app/instance");
 const path = require("path");
