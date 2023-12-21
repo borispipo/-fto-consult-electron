@@ -81,10 +81,10 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
     const start = x=>{
        return new Promise((resolve,reject)=>{
           return Promise.resolve(initPromise).finally(()=>{
-            cmd = `electron "${electronProjectRoot}"  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
+            cmd = `electron "${path.resolve(electronProjectRoot,"index.js")}"  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
             exec({
               cmd, 
-              projectRoot,
+              electronProjectRoot,
             });
             setTimeout(resolve,1000);
           })
