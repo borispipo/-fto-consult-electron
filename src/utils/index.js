@@ -8,6 +8,7 @@ module.exports = {
     exec : require("./exec"),
     uniqid : require("./uniqid"),
     debounce : require("./debounce"),
+    postMessage : require("./postMessage"),
     throwError : (...args)=>{
         console.error(...args);
         process.exit(-1);

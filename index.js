@@ -1,10 +1,11 @@
 const { program } = require('commander');
 const path = require("path");
 const fs = require("fs");
-const {isValidUrl,debounce,session,json:{isJSON}} = require("./src/utils");
+const {isValidUrl,debounce,json:{isJSON}} = require("./src/utils");
+const session = require("./src/utils/session");
 const {app, BrowserWindow,Tray,Menu,MenuItem,globalShortcut,systemPreferences,powerMonitor,ipcMain,dialog, nativeTheme} = require('electron')
-
 const isObj = x => x && typeof x =='object';
+const currentProcessId = require('process').pid || null;
 
 let appIsReady = false;
 
@@ -145,16 +146,13 @@ app.whenReady().then(() => {
     });
     appIsReady = true;
 });
-
-function createWindow () {
+function createWindow () { 
     // Créer le browser window
     mainWindow = createBrowserWindow({
       showOnLoad : false,
-      loadURL : undefined,
+      loadURL : pUrl,
       isMainWindow : true,
       registerDevToolsCommand : false,
-      file : indexFilePath,
-      url : pUrl,
       preload : path.resolve(__dirname,"src",'preload',"index.js"),
       webPreferences : {
         devTools : true,
@@ -197,7 +195,10 @@ function createWindow () {
         mainWindow.minimize()
         try {
           if(splash && splash instanceof BrowserWindow){
-            splash.destroy();
+            const splashTimeout = typeof mainProcess.splashTimeout =="number" ? mainProcess.splashTimeout : 3000;
+            setTimeout(()=>{
+              splash.destroy();
+            },splashTimeout);
           }
         } catch{ }
         mainWindow.restore();
@@ -346,6 +347,10 @@ function createWindow () {
     const p = app.getPath(pathName);
     event.returnValue = p;
     return p;
+  });
+  ipcMain.on("get-process-id",(event,pathName)=>{
+    event.returnValue = currentProcessId;
+    return event.returnValue;
   });
   ipcMain.on("get-app-path",(event,pathName)=>{
     event.returnValue = appPath;
@@ -539,9 +544,18 @@ app.on('window-all-closed', () => {
     }
 });
 
+const nodeProcessIDsessionName = "node-process-id";
+
 if(mainProcess.enableSingleInstance !== false){
+    const processId = session.get(nodeProcessIDsessionName);
+    let isRunning = false;
+    try {
+      if(processId){
+        isRunning = process.kill(processId,0)
+      }
+    } catch (e) {isRunning = e.code === 'EPERM';}
     const gotTheLock = app.requestSingleInstanceLock()
-    if (appIsReady && !gotTheLock) {
+    if (isRunning && !gotTheLock) {  
         quit();
     } else {
       app.on('second-instance', (event, commandLine, workingDirectory) => {
@@ -552,5 +566,8 @@ if(mainProcess.enableSingleInstance !== false){
             mainWindow.focus()
         }
       })
+    }
+    if(currentProcessId){
+        session.set(nodeProcessIDsessionName,currentProcessId);
     }
 }
