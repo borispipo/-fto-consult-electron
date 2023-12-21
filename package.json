@@ -1,13 +1,14 @@
 {
   "name": "@fto-consult/electron",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "Utilitaire permettant de préparer l'application electron/desktop, preconstruit à l'aide du framework @fto-consult/expo-ui",
   "main": "index.js",
   "bin": {
     "@fto-consult/electron": "bin/index.js"
   },
   "scripts": {
-    "test": "test"
+    "test": "test",
+    "extract-asar": "npx @electron/asar extract app.asar <destfolder>"
   },
   "keywords": [
     "electron",

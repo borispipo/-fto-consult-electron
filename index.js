@@ -29,8 +29,8 @@ const packageJSON = fs.existsSync(packageJSONPath) ? Object.assign({},require(`$
 const appName = typeof packageJSON.name =="string" && packageJSON.name || "";  
 
 let iconPath = icon && typeof icon =="string" && fs.existsSync(path.resolve(icon)) && path.resolve(icon) || undefined; 
-if(!iconPath && packageJSON.icon && typeof packageJSON.icon ==="string" && fs.existsSync(packageJSON.icon)){
-  iconPath = packageJSON.icon;
+if(!iconPath && packageJSON.icon && typeof packageJSON.icon ==="string" && fs.existsSync(path.resolve(packageJSON.icon))){
+  iconPath = path.resolve(packageJSON.icon);
 }
 if(iconPath && fs.existsSync(path.resolve(iconPath,iconName))){
     iconPath = path.resolve(iconPath,iconName);
