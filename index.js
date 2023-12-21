@@ -126,7 +126,7 @@ function createBrowserWindow (options){
     const url = isValidUrl(options.url) || typeof options.url ==='string' && options.url.trim().startsWith("file://") ? options.url : undefined;
     if(url){
       window.loadURL(url);
-    } else if(options.file && fs.existsSync(path.resolve(options.file))){
+    } else if(options.file && typeof options.file ==="string" && fs.existsSync(path.resolve(options.file))){
       window.loadFile(path.resolve(options.file));
     } 
     return window;
@@ -152,6 +152,7 @@ function createWindow () {
       showOnLoad : false,
       url : pUrl,
       isMainWindow : true,
+      file : indexFilePath,
       registerDevToolsCommand : false,
       preload : path.resolve(__dirname,"src",'preload',"index.js"),
       webPreferences : {

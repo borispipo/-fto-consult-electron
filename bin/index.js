@@ -93,25 +93,26 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
     }
     const promise = new Promise((resolve,reject)=>{
       const next = ()=>{
-          if(fs.existsSync(webBuildDir)){
+        if(fs.existsSync(webBuildDir)){
               return copy(webBuildDir,buildOutDir).catch(reject).then(resolve);
           } else {
             reject("dossier web-build exporté par electron innexistant!!");
           }
-        }
-        if(!url && (build || script ==="build" || !fs.existsSync(path.resolve(webBuildDir,"index.html")))){
-          console.log("exporting expo web app ...");
-          try {
-            writeFile(packagePath,JSON.stringify({...packageObj,homepage:"./"},null,"\t"));
-          } catch{}
-            cmd = frameworkObj.buildCmd;
-            return exec({cmd,projectRoot}).then(next).catch(reject).finally(()=>{
-              try {
-                writeFile(packagePath,JSON.stringify({...packageObj,homepage},null,"\t"));
-              } catch{}
-            });
-        }
+      }
+      if(!url && (build || script ==="build" || !fs.existsSync(path.resolve(webBuildDir,"index.html")))){
+        console.log("exporting expo web app ...");
+        try {
+          writeFile(packagePath,JSON.stringify({...packageObj,homepage:"./"},null,"\t"));
+        } catch{}
+          cmd = frameworkObj.buildCmd;
+          return exec({cmd,projectRoot}).then(next).catch(reject).finally(()=>{
+            try {
+              writeFile(packagePath,JSON.stringify({...packageObj,homepage},null,"\t"));
+            } catch{}
+          });
+      } else {
         next();
+      }
     });
     return promise.then(()=>{
       if(!fs.existsSync(buildOutDir) || !fs.existsSync(indexFile)){
