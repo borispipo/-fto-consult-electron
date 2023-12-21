@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 const path= require("path");
 const fs = require("fs");
 const  {createDir,electronDir,copy,exec,throwError,writeFile,isValidUrl} = require("../src/utils");
@@ -11,12 +10,12 @@ const supportedFrameworks = {
     },
 }
 
-program.description('utilitaire cli pour la plateforme electron. NB : Le package electron doit être installé globalement via l\'instruction npm i -g electron')
+program.description('utilitaire cli pour la plateforme electron. NB : Le package electron doit être installé globalement via l\'instruction : npm i -g electron')
   .argument('<cmd>', 'la commande à exécuter (start,init,build,package). Start permet de démarrer le script electron, init permet d\'initialiser l\'application, build permet de compiler le code expo (exporter), package permet d\'effectuer le packaging de l\'application pour la distribution')
   //.option('-r, --project-root [dir]', 'le project root de l\'application')
   //.option('-c, --config [dir]', 'le chemin (relatif au project root) du fichier de configuration de l\'application electron')
   //.option('-s, --splash [dir]', 'le chemin (relatif au project root) du fichier du splash screen de l\'application')
-  .option('-o, --out [dir]', 'le chemin du répertoire qui contiendra les fichiers build, des fichiers du exporté par le framework expo; commande : build|start')
+  .option('-o, --out [dir]', 'le chemin du répertoire qui contiendra les fichiers générés à l\'aide de la commande make : ; commande : make')
   .option('-u, --url [url]', 'le lien url qui sera ouvert par l\'application; commande start')
   .option('-b, --build [boolean]', 'si ce flag est spécfifié alors l\'application sera compilée; combinée avec la commande start|package pour indiquer que l\'application sera à nouveau exportée ou pas.')
   .option('-a, --arch [architecture]', 'l\'architecture de la plateforme; Commande package')

@@ -66,16 +66,13 @@ module.exports = ({projectRoot,electronProjectRoot,icon})=>{
             writeFile(gP,require("./gitignore"));
           } catch{};
         }
-        try {
-        
-        } catch(e){}
         console.log("installing package dependencies ...");
         return exec({
             cmd : "npm install",// --prefix "+electronProjectRoot,
             projectRoot : electronProjectRoot,
         }).then((a)=>{
             return resolve(a);
-        }).catch(reject);
+        });
     })
 }
 
