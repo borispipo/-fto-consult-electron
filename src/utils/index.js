@@ -1,4 +1,5 @@
 const path = require("path");
+const deleteFileOrDirectory = require("./deleteFileOrDirectory");
 module.exports = {
     createDir : require("./createDir"),
     writeFile : require("./writeFile"),
@@ -9,6 +10,9 @@ module.exports = {
     uniqid : require("./uniqid"),
     debounce : require("./debounce"),
     postMessage : require("./postMessage"),
+    deleteFile : deleteFileOrDirectory,
+    deleteDirectory : deleteFileOrDirectory,
+    deleteFileOrDirectory,
     throwError : (...args)=>{
         console.error(...args);
         process.exit(-1);
