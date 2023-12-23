@@ -76,7 +76,6 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
     }
     const globalElectronPath = path.resolve(electronProjectRoot,"node_modules","electron");
     const globalElectronCli = path.resolve(globalElectronPath,"cli.js");
-    const isElectronCli = script && fs.existsSync(path.resolve(script)) || !!!script;
     const electronCli = fs.existsSync(globalElectronCli)? `node "${globalElectronCli}"` : "electron";
     const hasUrl = isValidUrl(url);
     const start = x=>{
@@ -86,13 +85,13 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
             return exec({
               cmd, 
               projectRoot,
-            }).then(resolve).catch(reject).finally(()=>{
-              if(hasUrl) process.exit();
-            });
+            }).then(resolve).catch(reject);
           })
+      }).finally(()=>{
+        if(hasUrl) process.exit();
       })
     };
-    if(url || isElectronCli){
+    if(url){
       return start();
     }
     const promise = new Promise((resolve,reject)=>{
