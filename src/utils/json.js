@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 const {stringify:stringifyJSON,parse} = JSON;
-import {isRegExp} from "./isRegex";
+const isRegExp = require("./isRegex");
 
 module.exports =  decycle = function decycle(obj, stack = []) {
     if(typeof obj ==='function') return undefined;

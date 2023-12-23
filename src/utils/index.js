@@ -5,6 +5,7 @@ module.exports = {
     writeFile : require("./writeFile"),
     copy : require("./copy"),
     electronDir : path.resolve(__dirname, ".."),
+    isRegExp : require("./isRegex"),
     paths : require("./paths"),
     exec : require("./exec"),
     uniqid : require("./uniqid"),
