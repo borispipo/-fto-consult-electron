@@ -74,13 +74,10 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
     if(!createDir(outDir)){
         throwError("Impossible de créer le répertoire <<"+outDir+">> du fichier binaire!!");
     }
-    const globalElectronPath = path.resolve(electronProjectRoot,"node_modules","electron");
-    const globalElectronCli = path.resolve(globalElectronPath,"cli.js");
-    const electronCli = fs.existsSync(globalElectronCli)? `node "${globalElectronCli}"` : "electron";
     const start = x=>{
        return new Promise((resolve,reject)=>{
           return Promise.resolve(initPromise).finally(()=>{
-            cmd = `${electronCli} "${path.resolve(electronProjectRoot,"index.js")}"  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
+            cmd = `electron "${path.resolve(electronProjectRoot,"index.js")}"  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
             exec({
               cmd, 
               projectRoot,
