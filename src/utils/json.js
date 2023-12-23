@@ -5,7 +5,7 @@
 const {stringify:stringifyJSON,parse} = JSON;
 const isRegExp = require("./isRegex");
 
-module.exports =  decycle = function decycle(obj, stack = []) {
+module.exports.decycle = function decycle(obj, stack = []) {
     if(typeof obj ==='function') return undefined;
     if (!obj || typeof obj !== 'object')
         return obj;
@@ -22,11 +22,11 @@ module.exports =  decycle = function decycle(obj, stack = []) {
                 .map(([k, v]) => [k, decycle(v, s)]));
 }
 
-module.exports =  stringify = function(jsonObj,decylcleVal){
+module.exports.stringify = function(jsonObj,decylcleVal){
     return isJSON(jsonObj) ? jsonObj : JSON.stringify(decylcleVal !== false ? decycle(jsonObj) : jsonObj);
 }
 
-module.exports =  isJSON = function (json_string){
+module.exports.isJSON = function (json_string){
     if(!json_string || typeof json_string != 'string') return false;
     var text = json_string;
     return !(/[^,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]/.test(text.replace(/"(\\.|[^"\\])*"/g, '')));
@@ -37,7 +37,7 @@ module.exports =  isJSON = function (json_string){
  * @param {string} json string to parse
  * @return {object} or null, parse json
  */
- module.exports =   parseJSON  = function(jsonStr){
+ module.exports. parseJSON  = function(jsonStr){
     if(!isJSON(jsonStr)) {
         if(jsonStr && typeof(jsonStr) == 'object'){
             for(var i in jsonStr){
@@ -74,17 +74,17 @@ function replacer(key, value) {
       return value;
   }
 
-if(false){
-    JSON.stringify = function(o,replacerFunc,...rest){
-        replacerFunc = typeof replacerFunc =='function' ? replacerFunc : (key,value)=>value;
-        return stringifyJSON.call(JSON,o,(key,value,...rest)=>{
-            return replacerFunc.call(JSON,key,replacer(key,value),...rest);
-        },...rest);
-    }
-    JSON.parse = function(o,reviverFunc,...rest){
-        reviverFunc = typeof reviverFunc =='function'? reviverFunc : (key,value)=>value;
-        return parse.call(JSON,o,(key,value,...rest)=>{
-            return reviverFunc.call(JSON,o,reviver(key,value),...rest);
-        },...rest);
-    }
+JSON.stringify = function(o,replacerFunc,...rest){
+    const context = this || JSON;
+    replacerFunc = typeof replacerFunc =='function' ? replacerFunc : (key,value)=>value;
+    return stringifyJSON.call(context,o,(key,value,...rest)=>{
+        return replacerFunc.call(context,key,replacer(key,value),...rest);
+    },...rest);
+}
+JSON.parse = function(o,reviverFunc,...rest){
+    const context = this || JSON;
+    reviverFunc = typeof reviverFunc =='function'? reviverFunc : (key,value)=>value;
+    return parse.call(context,o,(key,value,...rest)=>{
+        return reviverFunc.call(context,o,reviver(key,value),...rest);
+    },...rest);
 }
