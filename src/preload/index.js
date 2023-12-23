@@ -166,14 +166,8 @@ const getMem = (unit,key)=>{
 
 
 const ELECTRON = {
-    get getPouchdb(){
-        return ({PouchDB,sqlPouch})=> {
-            window.sqlitePlugin = {openDatabase:require('websql')};
-            PouchDB.plugin(function CapacitorSqlitePlugin (PouchDB) {
-                PouchDB.adapter('node-sqlite', sqlPouch(), true)
-            });
-            return {adapter:"node-sqlite"};
-        };
+    get openPouchDBDatabase(){
+        return require('websql');
     },
     get getBackupPath(){
         return (p)=>{
