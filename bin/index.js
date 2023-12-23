@@ -132,8 +132,16 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
               cmd = `npx electron-forge package ${platform? `--platform="${platform}"`:""} ${arch?`--arch="${arch}"`:""}`;
               const electronPackagePath = path.resolve(electronProjectRoot,'package.json');
               const electronPackageJSON = require(electronPackagePath);
+              const iconPath = icon ? path.resolve(icon) : null;
+              const iconFolderOrPathName = iconPath ? path.parse(iconPath).base : null;
+              const iconNpath = iconFolderOrPathName ? `./${iconFolderOrPathName}`:null;
+              if(iconPath && iconNpath){
+                try {
+                  copy(iconPath,path.resolve(electronProjectRoot,iconNpath))
+                } catch{}
+              }
               try {
-                writeFile(electronPackagePath,JSON.stringify({...electronPackageJSON,name:packageObj.name||electronPackageJSON.realName||electronPackageJSON.name},null,"\t"));
+                writeFile(electronPackagePath,JSON.stringify({...electronPackageJSON,icon:iconNpath||electronPackageJSON.icon,name:packageObj.name||electronPackageJSON.realName||electronPackageJSON.name},null,"\t"));
               } catch{}
                 return exec({cmd,projectRoot:electronProjectRoot}).then(()=>{
                   console.log("application package avec succèss");

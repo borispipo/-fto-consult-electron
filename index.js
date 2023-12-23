@@ -9,8 +9,9 @@ const currentProcessId = require('process').pid || null;
 
 let appIsReady = false;
 
-const iconName = process.platform =="win32" ? "icon.ico" : process.platform =='darwin' ? "icon.incs" : "icon.png";
-
+const iconExtension = process.platform =="win32" ? "ico" : process.platform =='darwin' ? "incs" : "png";
+const iconName = `icon.${iconExtension}`;
+const logoIconName = `logo.${iconExtension}`;
 program
   .option('-u, --url <url>', 'L\'adresse url à ouvrir au lancement de l\'application')
   //.option('-r, --root <projectRoot>', 'le chemin du project root de l\'application')
@@ -39,6 +40,8 @@ if(!iconPath && packageJSON.icon && typeof packageJSON.icon ==="string" ){
 } 
 if(iconPath && fs.existsSync(path.resolve(iconPath,iconName))){
     iconPath = path.resolve(iconPath,iconName);
+} else if(iconPath && fs.existsSync(path.resolve(iconPath,logoIconName))){
+  iconPath = path.resolve(iconPath,logoIconName);
 }
 
 // fermee automatiquement quand l'objet JavaScript sera garbage collected.
