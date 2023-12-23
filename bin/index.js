@@ -146,7 +146,9 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
            break;
       }
     }).catch((e)=>{
-      console.log(e," is cathing ggg");
+      if(e && e?.toString()){
+        console.log(e," electron application error");
+      }
     }).finally(()=>{
       if(script !=="start"){
         process.exit();
