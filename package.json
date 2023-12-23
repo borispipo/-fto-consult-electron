@@ -1,6 +1,6 @@
 {
   "name": "@fto-consult/electron",
-  "version": "1.0.35",
+  "version": "1.0.36",
   "description": "Utilitaire permettant de préparer l'application electron/desktop, preconstruit à l'aide du framework @fto-consult/expo-ui",
   "main": "index.js",
   "bin": {
@@ -24,6 +24,7 @@
     "fs-extra": "^11.2.0",
     "node-machine-id": "^1.1.12",
     "node-sqlite": "^0.0.2-security",
-    "sanitize-filename": "^1.6.3"
+    "sanitize-filename": "^1.6.3",
+    "websql": "^2.0.3"
   }
 }
