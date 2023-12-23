@@ -1,5 +1,15 @@
 const {exec,execSync} = require('child_process');
 const fs = require("fs");
+
+const handleStdOut = (stdo,logMessages)=>{
+    if(logMessages !== false && stdo && stdo?.stdout && typeof stdo?.stdout?.on =='function'){
+        stdo.stdout.on('data', function(data) {
+            console.log(data); 
+        });
+    }
+    return stdo;
+}
+
 const _exec = (cmd,cmdOpts,logMessages,sync)=>{
     cmdOpts = typeof cmdOpts =='object' && cmdOpts || {};
     cmdOpts.env = typeof cmdOpts.env =="object" && cmdOpts.env || {};
@@ -11,14 +21,14 @@ const _exec = (cmd,cmdOpts,logMessages,sync)=>{
     const timer = cmdOpts.loader !==false  && !sync ? loaderTimer(cmd) : null;
     if(sync){
         try {
-            return execSync(cmd,cmdOpts);
+            return handleStdOut(execSync(cmd,cmdOpts),logMessages);
         } catch(e){
             clearInterval(timer);
             throw e;
         }
     }
     return new Promise((resolve,reject)=>{
-        exec(cmd,cmdOpts, (error, stdout, stderr) => {
+        return handleStdOut(exec(cmd,cmdOpts, (error, stdout, stderr) => {
             if (error) {
                 logMessages !== false && console.log(`error: ${error.message}`);;
                 reject(error);
@@ -36,7 +46,7 @@ const _exec = (cmd,cmdOpts,logMessages,sync)=>{
             }
             clearInterval(timer);
             resolve(stdout);
-        });
+        }),logMessages);
     })
 }
 const loaderTimer = function(timout) {

@@ -74,15 +74,17 @@ function replacer(key, value) {
       return value;
   }
 
-JSON.stringify = function(o,replacerFunc,...rest){
-    replacerFunc = typeof replacerFunc =='function' ? replacerFunc : (key,value)=>value;
-    return stringifyJSON.call(JSON,o,(key,value,...rest)=>{
-        return replacerFunc.call(JSON,key,replacer(key,value),...rest);
-    },...rest);
-}
-JSON.parse = function(o,reviverFunc,...rest){
-    reviverFunc = typeof reviverFunc =='function'? reviverFunc : (key,value)=>value;
-    return parse.call(JSON,o,(key,value,...rest)=>{
-        return reviverFunc.call(JSON,o,reviver(key,value),...rest);
-    },...rest);
+if(false){
+    JSON.stringify = function(o,replacerFunc,...rest){
+        replacerFunc = typeof replacerFunc =='function' ? replacerFunc : (key,value)=>value;
+        return stringifyJSON.call(JSON,o,(key,value,...rest)=>{
+            return replacerFunc.call(JSON,key,replacer(key,value),...rest);
+        },...rest);
+    }
+    JSON.parse = function(o,reviverFunc,...rest){
+        reviverFunc = typeof reviverFunc =='function'? reviverFunc : (key,value)=>value;
+        return parse.call(JSON,o,(key,value,...rest)=>{
+            return reviverFunc.call(JSON,o,reviver(key,value),...rest);
+        },...rest);
+    }
 }
