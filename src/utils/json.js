@@ -37,7 +37,7 @@ module.exports.isJSON = function (json_string){
  * @param {string} json string to parse
  * @return {object} or null, parse json
  */
- module.exports. parseJSON  = function(jsonStr){
+ module.exports.parseJSON  = function(jsonStr){
     if(!isJSON(jsonStr)) {
         if(jsonStr && typeof(jsonStr) == 'object'){
             for(var i in jsonStr){
@@ -57,4 +57,34 @@ module.exports.isJSON = function (json_string){
         return jsonStr;
     }
     return jsonStr;
+}
+
+
+function replacer(key, value) {
+    if (isRegExp(value))
+      return value.toString();
+    else
+      return value;
+}
+  
+  function reviver(key, value) {
+    if (isRegExp(value) && !(value instanceof RegExp)) {
+      return new RegExp(value);
+    } else
+      return value;
+  }
+
+module.exports.JSONStringify = function(o,replacerFunc,...rest){
+    const context = this || JSON;
+    replacerFunc = typeof replacerFunc =='function' ? replacerFunc : (key,value)=>value;
+    return stringifyJSON.call(context,o,(key,value,...rest)=>{
+        return replacerFunc.call(context,key,replacer(key,value),...rest);
+    },...rest);
+}
+module.exports.JSONParse = function(o,reviverFunc,...rest){
+    const context = this || JSON;
+    reviverFunc = typeof reviverFunc =='function'? reviverFunc : (key,value)=>value;
+    return parse.call(context,o,(key,value,...rest)=>{
+        return reviverFunc.call(context,o,reviver(key,value),...rest);
+    },...rest);
 }
