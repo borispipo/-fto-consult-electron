@@ -128,7 +128,6 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
                   console.log("package electron forge importé avec succèss");
                 });
               });
-                
             } else {
               cmd = `npx electron-forge package ${platform? `--platform="${platform}"`:""} ${arch?`--arch="${arch}"`:""}`;
               const electronPackagePath = path.resolve(electronProjectRoot,'package.json');
