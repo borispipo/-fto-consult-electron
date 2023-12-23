@@ -74,10 +74,14 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
     if(!createDir(outDir)){
         throwError("Impossible de créer le répertoire <<"+outDir+">> du fichier binaire!!");
     }
+    const globalElectronPath = path.resolve(electronProjectRoot,"node_modules","electron");
+    const globalElectronCli = path.resolve(globalElectronPath,"cli.js");
+    const isElectronCli = script && fs.existsSync(path.resolve(script)) || !!!script;
+    const electronCli = fs.existsSync(globalElectronCli)? `node "${globalElectronCli}"` : "electron";
     const start = x=>{
        return new Promise((resolve,reject)=>{
           return Promise.resolve(initPromise).finally(()=>{
-            cmd = `electron "${electronProjectRoot}"  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
+            cmd = `${electronCli} "${path.resolve(electronProjectRoot,"index.js")}"  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
             return exec({
               cmd, 
               projectRoot,
@@ -85,7 +89,7 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
           })
       })
     };
-    if(url){
+    if(url || isElectronCli){
       return start();
     }
     const promise = new Promise((resolve,reject)=>{
