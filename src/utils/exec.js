@@ -26,7 +26,7 @@ const _exec = (cmd,cmdOpts,logMessages,sync)=>{
         }
     }
     return new Promise((resolve,reject)=>{
-        return handleStdOut(exec(cmd,cmdOpts, (error, stdout, stderr) => {
+        const r = exec(cmd,cmdOpts, (error, stdout, stderr) => {
             if (error) {
                 logMessages !== false && console.log(`error: ${error.message}`);;
                 reject(error);
@@ -44,7 +44,8 @@ const _exec = (cmd,cmdOpts,logMessages,sync)=>{
             }
             clearInterval(timer);
             resolve(stdout);
-        }),logMessages);
+        });
+        return handleStdOut(r,logMessages);
     })
 }
 const loaderTimer = function(timout) {

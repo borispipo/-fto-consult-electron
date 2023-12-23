@@ -77,95 +77,92 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
     const globalElectronPath = path.resolve(electronProjectRoot,"node_modules","electron");
     const globalElectronCli = path.resolve(globalElectronPath,"cli.js");
     const electronCli = fs.existsSync(globalElectronCli)? `node "${globalElectronCli}"` : "electron";
-    const hasUrl = isValidUrl(url);
     const start = x=>{
        return new Promise((resolve,reject)=>{
           return Promise.resolve(initPromise).finally(()=>{
             cmd = `${electronCli} "${path.resolve(electronProjectRoot,"index.js")}"  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
-            return exec({
+            exec({
               cmd, 
               projectRoot,
-            }).then(resolve).catch(reject);
+            });
           })
-      }).finally(()=>{
-        if(hasUrl) process.exit();
-      })
+      });
     };
-    if(url){
+    if(isValidUrl(url)){
       return start();
-    }
-    const promise = new Promise((resolve,reject)=>{
-      const next = ()=>{
-        if(fs.existsSync(webBuildDir)){
-              return copy(webBuildDir,buildOutDir).catch(reject).then(resolve);
-          } else {
-            reject("dossier web-build exporté par electron innexistant!!");
-          }
-      }
-      if(!url && (build || script ==="build" || !fs.existsSync(path.resolve(webBuildDir,"index.html")))){
-        console.log("exporting expo web app ...");
-        try {
-          writeFile(packagePath,JSON.stringify({...packageObj,homepage:"./"},null,"\t"));
-        } catch{}
-          cmd = frameworkObj.buildCmd;
-          return exec({cmd,projectRoot}).then(next).catch(reject).finally(()=>{
-            try {
-              writeFile(packagePath,JSON.stringify({...packageObj,homepage},null,"\t"));
-            } catch{}
-          });
-      } else {
-        next();
-      }
-    });
-    Promise.all([Promise.resolve(initPromise),promise]).then(()=>{
-      if(!fs.existsSync(buildOutDir) || !fs.existsSync(indexFile)){
-         throwError("répertoire d'export web invalide où innexistant ["+buildOutDir+"]");
-      }
-      switch(script){
-          case "start":
-             return start();
-          case "package" :
-            if(packageImport || opts.import){ //on importe le projet existant electron forge, @see : https://www.electronforge.io/import-existing-project
-              console.log("importing electron forge existing project....");
-              cmd = "npm install --save-dev @electron-forge/cli";
-              return exec({cmd,projectRoot:electronProjectRoot}).finally(()=>{
-                cmd = `npm exec --package=@electron-forge/cli -c "electron-forge import"`;
-                return exec({cmd,projectRoot:electronProjectRoot}).then(()=>{
-                  console.log("package electron forge importé avec succèss");
-                });
-              });
+    } else {
+      const promise = new Promise((resolve,reject)=>{
+        const next = ()=>{
+          if(fs.existsSync(webBuildDir)){
+                return copy(webBuildDir,buildOutDir).catch(reject).then(resolve);
             } else {
-              cmd = `npx electron-forge package ${platform? `--platform="${platform}"`:""} ${arch?`--arch="${arch}"`:""}`;
-              const electronPackagePath = path.resolve(electronProjectRoot,'package.json');
-              const electronPackageJSON = require(electronPackagePath);
-              const iconPath = icon ? path.resolve(icon) : null;
-              const iconFolderOrPathName = iconPath ? path.parse(iconPath).base : null;
-              const iconNpath = iconFolderOrPathName ? `./${iconFolderOrPathName}`:null;
-              if(iconPath && iconNpath){
-                try {
-                  copy(iconPath,path.resolve(electronProjectRoot,iconNpath))
-                } catch{}
-              }
-              try {
-                writeFile(electronPackagePath,JSON.stringify({...electronPackageJSON,icon:iconNpath||electronPackageJSON.icon,name:packageObj.name||electronPackageJSON.realName||electronPackageJSON.name},null,"\t"));
-              } catch{}
-                return exec({cmd,projectRoot:electronProjectRoot}).then(()=>{
-                  console.log("application package avec succèss");
-                }).finally(()=>{
-                    try {
-                      writeFile(electronPackagePath,JSON.stringify(electronPackageJSON,null,"\t"));
-                    } catch{}
-                });
+              reject("dossier web-build exporté par electron innexistant!!");
             }
-           break;
-      }
-    }).catch((e)=>{
-      if(e && e?.toString()){
-        console.log(e," electron application error");
-      }
-    }).finally(()=>{
-      if(script !=="start"){
-        process.exit();
-      }
-    });
+        }
+        if(!url && (build || script ==="build" || !fs.existsSync(path.resolve(webBuildDir,"index.html")))){
+          console.log("exporting expo web app ...");
+          try {
+            writeFile(packagePath,JSON.stringify({...packageObj,homepage:"./"},null,"\t"));
+          } catch{}
+            cmd = frameworkObj.buildCmd;
+            return exec({cmd,projectRoot}).then(next).catch(reject).finally(()=>{
+              try {
+                writeFile(packagePath,JSON.stringify({...packageObj,homepage},null,"\t"));
+              } catch{}
+            });
+        } else {
+          next();
+        }
+      });
+      Promise.all([Promise.resolve(initPromise),promise]).then(()=>{
+        if(!fs.existsSync(buildOutDir) || !fs.existsSync(indexFile)){
+           throwError("répertoire d'export web invalide où innexistant ["+buildOutDir+"]");
+        }
+        switch(script){
+            case "start":
+               return start();
+            case "package" :
+              if(packageImport || opts.import){ //on importe le projet existant electron forge, @see : https://www.electronforge.io/import-existing-project
+                console.log("importing electron forge existing project....");
+                cmd = "npm install --save-dev @electron-forge/cli";
+                return exec({cmd,projectRoot:electronProjectRoot}).finally(()=>{
+                  cmd = `npm exec --package=@electron-forge/cli -c "electron-forge import"`;
+                  return exec({cmd,projectRoot:electronProjectRoot}).then(()=>{
+                    console.log("package electron forge importé avec succèss");
+                  });
+                });
+              } else {
+                cmd = `npx electron-forge package ${platform? `--platform="${platform}"`:""} ${arch?`--arch="${arch}"`:""}`;
+                const electronPackagePath = path.resolve(electronProjectRoot,'package.json');
+                const electronPackageJSON = require(electronPackagePath);
+                const iconPath = icon ? path.resolve(icon) : null;
+                const iconFolderOrPathName = iconPath ? path.parse(iconPath).base : null;
+                const iconNpath = iconFolderOrPathName ? `./${iconFolderOrPathName}`:null;
+                if(iconPath && iconNpath){
+                  try {
+                    copy(iconPath,path.resolve(electronProjectRoot,iconNpath))
+                  } catch{}
+                }
+                try {
+                  writeFile(electronPackagePath,JSON.stringify({...electronPackageJSON,icon:iconNpath||electronPackageJSON.icon,name:packageObj.name||electronPackageJSON.realName||electronPackageJSON.name},null,"\t"));
+                } catch{}
+                  return exec({cmd,projectRoot:electronProjectRoot}).then(()=>{
+                    console.log("application package avec succèss");
+                  }).finally(()=>{
+                      try {
+                        writeFile(electronPackagePath,JSON.stringify(electronPackageJSON,null,"\t"));
+                      } catch{}
+                  });
+            };
+        }
+      }).catch((e)=>{
+        if(e && e?.toString()){
+          console.log(e," electron application error");
+        }
+      }).finally(()=>{
+        if(script !=="start"){
+          process.exit();
+        }
+      });
+    }
   
