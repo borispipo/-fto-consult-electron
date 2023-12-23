@@ -2,10 +2,8 @@ const {exec,execSync} = require('child_process');
 const fs = require("fs");
 
 const handleStdOut = (stdo,logMessages)=>{
-    if(logMessages !== false && stdo && stdo?.stdout && typeof stdo?.stdout?.on =='function'){
-        stdo.stdout.on('data', function(data) {
-            console.log(data); 
-        });
+    if(logMessages !== false && stdo && stdo?.stdout && typeof stdo?.stdout?.pipe =='function'){
+        stdo.stdout.pipe(process.stdout);   
     }
     return stdo;
 }
