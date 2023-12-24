@@ -1,7 +1,7 @@
 
 const {createDir,isDataURL,postMessage,isBase64,uniqid} = require("../utils");
 const Config = require("../utils/config");
-const { contextBridge, ipcRenderer, shell } = require('electron')
+const { contextBridge, ipcRenderer, shell,Notification} = require('electron')
 const appInstance = require("./app/instance");
 const path = require("path");
 const fs = require("fs");
@@ -489,7 +489,23 @@ const ELECTRON = {
     },
     get appPath(){
         return ipcRenderer.sendSync("get-app-path");
-    }
+    },
+    get notify(){
+        /***** permet d'envoyer les notifications avec l'api Notification d'electron*/
+        return function(message,options){
+            if(message && typeof message =='string'){
+                message = {body:message};
+            } else if(typeof message !=='object' || !message || Array.isArray(message)){
+                message = {};
+            }
+            message = Object.assign({},message);
+            options = Object.assign({},options);
+            options = {...options,...message};
+            options.body = options.body || options.message;
+            options.title = options.title || "Notifications";
+            return new Notification(options).show();
+        }
+    },
 };
 
 ELECTRON.getBackupPath();
