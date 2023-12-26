@@ -141,13 +141,13 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
                   } catch{}
                 }
                 try {
-                  writeFile(electronPackagePath,JSON.stringify({...electronPackageJSON,icon:iconNpath||electronPackageJSON.icon,name:packageObj.name||electronPackageJSON.realName||electronPackageJSON.name},null,"\t"));
+                  writeFile(electronPackagePath,JSON.stringify({...electronPackageJSON,icon:iconNpath||electronPackageJSON.icon,version:packageObj.version,name:packageObj.name||electronPackageJSON.realName||electronPackageJSON.name},null,"\t"));
                 } catch{}
                   return exec({cmd,projectRoot:electronProjectRoot}).then(()=>{
                     console.log("application package avec succèss");
                   }).finally(()=>{
                       try {
-                        writeFile(electronPackagePath,JSON.stringify(electronPackageJSON,null,"\t"));
+                        writeFile(electronPackagePath,JSON.stringify({...electronPackageJSON,version:packageObj.version},null,"\t"));
                       } catch{}
                   });
             };
