@@ -1,12 +1,13 @@
-const {platform, homedir} = require("os");
+const {homedir} = require("os");
 const path = require("path");
 const fs = require("fs");
+const isWritable = require("./isWritable");
 
 module.exports = function getAppDataPath(appName) {
   const platform = process.platform;
   let p = undefined;
   appName = typeof appName =="string" && appName.trim().toUpperCase() || "";
-  const appDataPath = process.env.ProgramData || process.env.ALLUSERSPROFILE || process.env["APPDATA"]; 
+  const appDataPath = isWritable(process.env.ProgramData) && process.env.ProgramData || isWritable(process.env.ALLUSERSPROFILE) && process.env.ALLUSERSPROFILE || process.env["APPDATA"]; 
   if (!appDataPath || !fs.existsSync(appDataPath)) {
     const homePath = homedir();
     const HOME = process.env.HOME;
