@@ -1,5 +1,5 @@
 
-const {createDir,isDataURL,postMessage,isBase64,uniqid} = require("../utils");
+const {createDir,isDataURL,postMessage,isBase64,uniqid,json:{isJSON,parseJSON}} = require("../utils");
 const Config = require("../utils/config");
 const appUrl = require("../utils/appUrl");
 const { contextBridge, ipcRenderer, shell,Notification} = require('electron')
@@ -23,7 +23,7 @@ const getPath = function(pathName){
     if(typeof pathName !=='string' || !pathName) return;
     return ipcRenderer.sendSync("get-path",pathName);
 }
-const APP_PATH = path.join(getPath("appData"),APP_NAME).toLowerCase();
+const APP_PATH = ipcRenderer.sendSync("get-APP_PATH");
 let databasePath = path.join(APP_PATH,"databases");
 let ROOT_APP_FOLDER = undefined;
 let appBackupPathRef = undefined;
@@ -501,6 +501,22 @@ const ELECTRON = {
     },
     get appUrlSessionKey(){
         return appUrl.sessionKey;
+    },
+    get session(){
+        return {
+            get get(){
+                return (key)=>{
+                    const v = ipcRenderer.sendSync("get-session",key);
+                    if(isJSON(v)) return parseJSON(v);
+                    return v;
+                }
+            },
+            get set(){
+                return (key,value)=>{
+                    return ipcRenderer.sendSync("set-session",key,typeof value =='object'? JSON.stringify(value):value);
+                }
+            }
+        }
     },
     get notify(){
         /***** permet d'envoyer les notifications avec l'api Notification d'electron*/

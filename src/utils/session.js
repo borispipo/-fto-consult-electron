@@ -1,5 +1,8 @@
 const {app} = require('electron');
 const Conf = require('./config');
-const session = new Conf({cwd:app.getPath('userData')});
 
-module.exports = session;
+/***** @see : https://www.npmjs.com/package/conf */
+module.exports = function(options){
+    options = Object.assign({},options);
+    return new Conf({cwd:app.getPath('userData'),...options});
+};

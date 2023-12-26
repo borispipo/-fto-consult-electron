@@ -1,9 +1,8 @@
 const { program } = require('commander');
 const path = require("path");
 const fs = require("fs");
-const {isValidUrl,debounce,json:{isJSON}} = require("./src/utils");
+const {isValidUrl,debounce,json:{isJSON,parseJSON}} = require("./src/utils");
 const appUrl = require("./src/utils/appUrl");
-const session = require("./src/utils/session");
 const {app, BrowserWindow,Tray,Menu,MenuItem,globalShortcut,systemPreferences,powerMonitor,ipcMain,dialog, nativeTheme} = require('electron')
 const isObj = x => x && typeof x =='object';
 const currentProcessId = require('process').pid || null;
@@ -57,6 +56,8 @@ const mainProcessRequired = mainProcessIndex && require(`${mainProcessIndex}`);
 //pour étendre les fonctionnalités au niveau du main proceess, bien vouloir écrire dans le fichier ../electron/main/index.js
 const mainProcess = mainProcessRequired && typeof mainProcessRequired =='object'? mainProcessRequired : {};
 const execPath = app.getPath ('exe') || process.execPath;
+const APP_PATH = path.join(app.getPath("appData"),appName?.toUpperCase());
+const session = require("./src/utils/session")({cwd:APP_PATH});
 // Gardez une reference globale de l'objet window, si vous ne le faites pas, la fenetre sera
 if(!isValidUrl(pUrl) && !fs.existsSync(indexFilePath)){
   throw {message:`Unable to start the application: index file located at [${indexFilePath}] does not exists : appPath = [${appPath}], exec path is ${execPath}`}
@@ -357,10 +358,30 @@ function createWindow () {
     tray.setContextMenu(contextMenu) 
   });
   
+  ipcMain.on("get-session",(event,key)=>{
+    const p = session.get(key);
+    event.returnValue = JSON.stringify(p);
+    return p;
+  });
+  ipcMain.on("set-session",(event,key,value)=>{
+    if(isJSON(value)){
+      value = parseJSON(value);
+    }
+    if(typeof key =="string" && key){
+        session.set(key,value);
+        return true;
+    }
+    return false;
+  });
+  
   ipcMain.on("get-path",(event,pathName)=>{
     const p = app.getPath(pathName);
     event.returnValue = p;
     return p;
+  });
+  ipcMain.on("get-APP_PATH",(event,pathName)=>{
+    event.returnValue = APP_PATH;
+    return event.returnValue;
   });
   ipcMain.on("get-process-id",(event,pathName)=>{
     event.returnValue = currentProcessId;
