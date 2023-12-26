@@ -2,6 +2,7 @@ const { program } = require('commander');
 const path = require("path");
 const fs = require("fs");
 const {isValidUrl,debounce,json:{isJSON}} = require("./src/utils");
+const appUrl = require("./src/utils/appUrl");
 const session = require("./src/utils/session");
 const {app, BrowserWindow,Tray,Menu,MenuItem,globalShortcut,systemPreferences,powerMonitor,ipcMain,dialog, nativeTheme} = require('electron')
 const isObj = x => x && typeof x =='object';
@@ -155,9 +156,10 @@ app.whenReady().then(() => {
 });
 function createWindow () { 
     // Créer le browser window
+    const aUrl = appUrl.url;
     mainWindow = createBrowserWindow({
       showOnLoad : false,
-      url : pUrl,
+      url : isValidUrl(pUrl)? pUrl : isValidUrl(aUrl)? aUrl : undefined,
       isMainWindow : true,
       file : indexFilePath,
       registerDevToolsCommand : false,
