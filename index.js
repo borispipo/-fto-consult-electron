@@ -57,21 +57,7 @@ const mainProcess = mainProcessRequired && typeof mainProcessRequired =='object'
 const execPath = app.getPath ('exe') || process.execPath;
 const APP_PATH = path.join(app.getPath("appData"),appName?.toUpperCase());
 const session = require("./src/utils/session")({appName});
-const appUrlSessionkey = "main-app-url-skey";
-const appUrl = {
-  get sessionKey(){
-      return appUrlSessionkey;
-  },
-  get url(){
-      return session.get(appUrlSessionkey)
-  },
-  set url(url){
-      if(isValidUrl(url)){
-          session.set(appUrlSessionkey,url);
-      }
-      return session.get(appUrlSessionkey);
-  }
-}
+const appUrl = require("./src/utils/appUrl")({appName});
 // Gardez une reference globale de l'objet window, si vous ne le faites pas, la fenetre sera
 if(!isValidUrl(pUrl) && !fs.existsSync(indexFilePath)){
   throw {message:`Unable to start the application: index file located at [${indexFilePath}] does not exists : appPath = [${appPath}], exec path is ${execPath}`}
@@ -446,15 +432,6 @@ function createWindow () {
      } else {
         event.returnValue = null;
      }
-  });
-  ipcMain.on("get-app-url",(event)=>{
-    event.returnValue = appUrl.url;
-    return event.returnValue;
-  });
-  ipcMain.on("set-app-url",(event,url)=>{
-    appUrl.url = url;
-    event.returnValue = appUrl.url;
-    return event.returnValue;
   });
   ipcMain.on('minimize-main-window', () => {
     if(mainWindow !== null && mainWindow){

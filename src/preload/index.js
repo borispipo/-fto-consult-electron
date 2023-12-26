@@ -14,6 +14,7 @@ if(!appName || typeof appName !=='string'){
     console.error("Nom de l'application invalide!! Veuillez spécifier un nom valide d'application ",projectRoot," is electron project root")
 }
 const APP_NAME = appName?.toUpperCase() || "";
+const appUrl = require("../utils/appUrl")({appName});
 let backupPathField = "_e_backupDataPath";
 let cBackupPathField = "company"+backupPathField;
 let dbPathField = "_electron_DBPathField";
@@ -289,7 +290,6 @@ const ELECTRON = {
     },
     get on (){
         return (eventName, callback)=> {
-            console.log(eventName," is evname eee",callback);
             return ipcRenderer.on(eventName, callback)
         };
     },
@@ -492,12 +492,12 @@ const ELECTRON = {
     },
     /**** permet de retourner l'url principale de l'application */
     get appUrl(){
-        return ipcRenderer.sendSync("get-app-url");
+        return appUrl.url;
     },
     set appUrl(url){
-        return ipcRenderer.sendSync("set-app-url",url);
+        return appUrl.url = url;
     },
-    get session(){
+    get mainSession(){
         return {
             get get(){
                 return (key)=>{
