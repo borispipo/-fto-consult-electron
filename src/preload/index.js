@@ -1,7 +1,7 @@
 
 const {createDir,isDataURL,postMessage,isBase64,uniqid,json:{isJSON,parseJSON}} = require("../utils");
-const Config = require("../utils/config");
 const { contextBridge, ipcRenderer, shell,Notification} = require('electron')
+const getAppDataPath = require("../utils/getAppDataPath");
 const appInstance = require("./app/instance");
 const path = require("path");
 const fs = require("fs");
@@ -45,23 +45,18 @@ if(typeof separator != 'string' || !separator){
         return filePath.substring(0, sepIndex+1);
     })();
 }
-let confPath = process.env.ProgramData || process.env.ALLUSERSPROFILE;
+const session = require("../utils/session")({appName});
+const confPath = getAppDataPath(appName);
 if(confPath && typeof confPath =="string"){
-    if(fs.existsSync(confPath)){
-        confPath = path.join(confPath,APP_NAME);
-        if(createDir(confPath)){
-            ROOT_APP_FOLDER = confPath;
-            databasePath = path.join(confPath,"databases");
-            createDir(databasePath);
-            confPath = path.join(confPath,"CONFIG");
-            createDir(confPath);
-        }
-    } else confPath = undefined;
-} else confPath = undefined;
-const config = new Config({cwd:confPath});
+    if(createDir(confPath)){
+        ROOT_APP_FOLDER = confPath;
+        databasePath = path.join(confPath,"databases");
+        createDir(databasePath);
+    }
+}
 
 const getDatabasePath = ()=>{
-    const p = config.get(dbPathField);
+    const p = session.get(dbPathField);
     if(fs.existsSync(p)){
         databasePath = p
     }
@@ -71,12 +66,12 @@ const getDatabasePath = ()=>{
     return databasePath;
 }
 const setDatabasePath =  (newPath)=>{
-    config.set(dbPathField,newPath)
+    session.set(dbPathField,newPath)
 };
 const setBackupPath = (newPath)=>{
     newPath = typeof newPath =='string' && newPath || typeof ROOT_APP_FOLDER =='string' && ROOT_APP_FOLDER || path.join(getPath("documents"),APP_NAME);
     appBackupPathRef = newPath;
-    config.set(cBackupPathField,appBackupPathRef)
+    session.set(cBackupPathField,appBackupPathRef)
 };
 
 const validChannels = ["toMain", "myRenderChannel"];
@@ -165,14 +160,13 @@ const getMem = (unit,key)=>{
     return memory;
 }
 
-
 const ELECTRON = {
     get openPouchDBDatabase(){
         return require('websql');
     },
     get getBackupPath(){
         return (p)=>{
-            const eePath = config.get(cBackupPathField);
+            const eePath = session.get(cBackupPathField);
             const defPath  = ROOT_APP_FOLDER || path.join(getPath("documents"),APP_NAME);
             appBackupPathRef = typeof eePath =='string' && eePath || typeof defPath =='string' && defPath || '';
             if(!fs.existsSync(appBackupPathRef)){
@@ -196,14 +190,11 @@ const ELECTRON = {
     get setDatabasePath (){
         return setDatabasePath;
     },
-    set backupPath (backupPath){
-        return setBackupPath(backupPath);
-    },
     get setBackupPath (){
         return setBackupPath;
     } ,
     get CONFIG (){
-        return config;
+        return session;
     },
     get showOpenDialog(){
        return (options)=>{
@@ -253,12 +244,6 @@ const ELECTRON = {
             get : getPath,
             HOME : getPath("home"),
             USERDATA : getPath("userData"),
-            /*** 
-            * Per-user application data directory, which by default points to:
-             * %APPDATA% on Windows
-             *  $XDG_CONFIG_HOME or ~/.config on Linux
-             *  ~/Library/Application Support on macOS
-             */
             APPDATA : getPath("appData"),
             CACHE : getPath("cache"),
             TEMP : getPath("temp"),//Temporary directory.
@@ -281,10 +266,10 @@ const ELECTRON = {
     get SESSION (){
         return  {
             set : (key,value) =>{
-                return config.set(key,value);
+                return session.set(key,value);
             },
             get : (key) =>{
-                return config.get(key);
+                return session.get(key);
             }
         };
     },
@@ -491,11 +476,14 @@ const ELECTRON = {
         return ipcRenderer.sendSync("get-app-path");
     },
     /**** permet de retourner l'url principale de l'application */
-    get appUrl(){
-        return appUrl.url;
+    get getAppUrl(){
+        return ()=>appUrl.url;
     },
-    set appUrl(url){
-        return appUrl.url = url;
+    get setAppUrl(){
+        return (url)=>{
+            appUrl.url = url;
+            return appUrl.url;
+        }
     },
     get mainSession(){
         return {

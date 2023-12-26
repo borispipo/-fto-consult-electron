@@ -6,5 +6,5 @@ module.exports = function(options){
     options = Object.assign({},options);
     const appName = typeof options.appName =="string"? options.appName.toUpperCase().trim() : null;
     const cwd = require("./getAppDataPath")(appName);
-    return new Conf({cwd,...options});
+    return new Conf({cwd:path.resolve(cwd,"CONFIG"),...options});
 };

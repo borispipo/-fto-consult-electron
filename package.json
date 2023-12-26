@@ -1,6 +1,6 @@
 {
   "name": "@fto-consult/electron-gen",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "description": "Utilitaire permettant de préparer l'application electron/desktop, preconstruit à l'aide du framework @fto-consult/expo-ui",
   "main": "index.js",
   "bin": {

@@ -6,7 +6,7 @@ module.exports = function getAppDataPath(appName) {
   const platform = process.platform;
   let p = undefined;
   appName = typeof appName =="string" && appName.trim().toUpperCase() || "";
-  const appDataPath = process.env["APPDATA"]; 
+  const appDataPath = process.env.ProgramData || process.env.ALLUSERSPROFILE || process.env["APPDATA"]; 
   if (!appDataPath || !fs.existsSync(appDataPath)) {
     const homePath = homedir();
     const HOME = process.env.HOME;

@@ -1,4 +1,5 @@
 const appUrlSessionkey = "main-app-url-skey";
+const isValidUrl = require("./isValidUrl");
 module.exports = function(options){
     const session = require("./session")(options);
     return {
