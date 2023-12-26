@@ -485,6 +485,9 @@ const ELECTRON = {
             return appUrl.url;
         }
     },
+    get getLoadedAppUrl(){
+        return ipcRenderer.sendSync("get-loaded-app-url");
+    },
     get mainSession(){
         return {
             get get(){

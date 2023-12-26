@@ -1,7 +1,7 @@
 const { program } = require('commander');
 const path = require("path");
 const fs = require("fs");
-const {isValidUrl,debounce,json:{isJSON,parseJSON}} = require("./src/utils");
+const {isValidUrl,debounce,json:{isJSON,parseJSON},urlExists} = require("./src/utils");
 const {app, BrowserWindow,Tray,Menu,MenuItem,globalShortcut,systemPreferences,powerMonitor,ipcMain,dialog, nativeTheme} = require('electron')
 const isObj = x => x && typeof x =='object';
 const currentProcessId = require('process').pid || null;
@@ -133,14 +133,23 @@ function createBrowserWindow (options){
     });
     window.webContents.on('context-menu',clipboadContextMenu);
     const url = isValidUrl(options.url) || typeof options.url ==='string' && options.url.trim().startsWith("file://") ? options.url : undefined;
+    const file = options.file && typeof options.file ==="string" && fs.existsSync(path.resolve(options.file)) && options.file || null;
     if(url){
-      window.loadURL(url);
-    } else if(options.file && typeof options.file ==="string" && fs.existsSync(path.resolve(options.file))){
-      window.loadFile(path.resolve(options.file));
+      urlExists(url).then((u)=>{
+        window.loadURL(url);
+        window.loadedUrl = url;
+      }).catch(e=>{
+        console.log("parsing url ",e,url);
+        if(file){
+          window.loadFile(path.resolve(file));
+        }
+      });
+    } else if(file){
+      window.loadFile(path.resolve(file));
     } 
     return window;
 }
-  
+
 app.whenReady().then(() => {
     createWindow();
     const readOpts = {toggleDevTools,browserWindow:mainWindow,mainWindow:mainWindow};
@@ -480,7 +489,8 @@ function createWindow () {
   }
   ipcMain.on("set-main-window-title",(event,title)=>{
     if(mainWindow !== null){
-        mainWindow.setTitle(title);
+        const loadedUrl = isValidUrl(mainWindow?.loadedUrl) && mainWindow.loadedUrl?.trim() ||"";
+        mainWindow.setTitle(`${title}${loadedUrl?` | ${loadedUrl}`:""}`);
     }
   });
   
@@ -577,6 +587,12 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
       quit();
     }
+});
+
+ipcMain.on("get-loaded-app-url",(event)=>{
+  const p = mainWindow !== null && mainWindow ? mainWindow?.loadedUrl : undefined;
+  event.returnValue = p;
+  return p;
 });
 
 const nodeProcessIDsessionName = "node-process-id";

@@ -4,6 +4,7 @@ module.exports = {
     createDir : require("./createDir"),
     writeFile : require("./writeFile"),
     isWritable : require("./isWritable"),
+    urlExists : require("./urlExists"),
     copy : require("./copy"),
     electronDir : path.resolve(__dirname, ".."),
     isRegExp : require("./isRegex"),
