@@ -1,7 +1,6 @@
 
 const {createDir,isDataURL,postMessage,isBase64,uniqid,json:{isJSON,parseJSON}} = require("../utils");
 const Config = require("../utils/config");
-const appUrl = require("../utils/appUrl");
 const { contextBridge, ipcRenderer, shell,Notification} = require('electron')
 const appInstance = require("./app/instance");
 const path = require("path");
@@ -493,14 +492,10 @@ const ELECTRON = {
     },
     /**** permet de retourner l'url principale de l'application */
     get appUrl(){
-        return appUrl.url;
+        return ipcRenderer.sendSync("get-app-url");
     },
     set appUrl(url){
-        appUrl.url = url;
-        return appUrl.url;
-    },
-    get appUrlSessionKey(){
-        return appUrl.sessionKey;
+        return ipcRenderer.sendSync("set-app-url",url);
     },
     get session(){
         return {

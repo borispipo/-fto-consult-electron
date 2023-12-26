@@ -2,7 +2,6 @@ const { program } = require('commander');
 const path = require("path");
 const fs = require("fs");
 const {isValidUrl,debounce,json:{isJSON,parseJSON}} = require("./src/utils");
-const appUrl = require("./src/utils/appUrl");
 const {app, BrowserWindow,Tray,Menu,MenuItem,globalShortcut,systemPreferences,powerMonitor,ipcMain,dialog, nativeTheme} = require('electron')
 const isObj = x => x && typeof x =='object';
 const currentProcessId = require('process').pid || null;
@@ -57,7 +56,22 @@ const mainProcessRequired = mainProcessIndex && require(`${mainProcessIndex}`);
 const mainProcess = mainProcessRequired && typeof mainProcessRequired =='object'? mainProcessRequired : {};
 const execPath = app.getPath ('exe') || process.execPath;
 const APP_PATH = path.join(app.getPath("appData"),appName?.toUpperCase());
-const session = require("./src/utils/session")({cwd:APP_PATH});
+const session = require("./src/utils/session")({appName});
+const appUrlSessionkey = "main-app-url-skey";
+const appUrl = {
+  get sessionKey(){
+      return appUrlSessionkey;
+  },
+  get url(){
+      return session.get(appUrlSessionkey)
+  },
+  set url(url){
+      if(isValidUrl(url)){
+          session.set(appUrlSessionkey,url);
+      }
+      return session.get(appUrlSessionkey);
+  }
+}
 // Gardez une reference globale de l'objet window, si vous ne le faites pas, la fenetre sera
 if(!isValidUrl(pUrl) && !fs.existsSync(indexFilePath)){
   throw {message:`Unable to start the application: index file located at [${indexFilePath}] does not exists : appPath = [${appPath}], exec path is ${execPath}`}
@@ -155,6 +169,7 @@ app.whenReady().then(() => {
     });
     appIsReady = true;
 });
+
 function createWindow () { 
     // Créer le browser window
     const aUrl = appUrl.url;
@@ -432,7 +447,15 @@ function createWindow () {
         event.returnValue = null;
      }
   });
-    
+  ipcMain.on("get-app-url",(event)=>{
+    event.returnValue = appUrl.url;
+    return event.returnValue;
+  });
+  ipcMain.on("set-app-url",(event,url)=>{
+    appUrl.url = url;
+    event.returnValue = appUrl.url;
+    return event.returnValue;
+  });
   ipcMain.on('minimize-main-window', () => {
     if(mainWindow !== null && mainWindow){
        mainWindow.blur();
