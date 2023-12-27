@@ -1,11 +1,12 @@
 
-const {createDir,isDataURL,postMessage,isBase64,uniqid,json:{isJSON,parseJSON}} = require("../utils");
+const {createDir,dataURL,postMessage,base64:{isBase64},uniqid,json:{isJSON,parseJSON},isNonNullString} = require("../utils");
 const { contextBridge, ipcRenderer, shell,Notification} = require('electron')
 const getAppDataPath = require("../utils/getAppDataPath");
 const appInstance = require("./app/instance");
 const path = require("path");
 const fs = require("fs");
-const isNonNullString = x=>x && typeof x =='string';
+const FILE = require("../utils/file");
+const {getExtension,sanitizeFileName} = FILE;
 const appName = ipcRenderer.sendSync("get-app-name");
 const projectRoot = ipcRenderer.sendSync("get-project-root");
 const sanitize = require("sanitize-filename");
@@ -91,44 +92,6 @@ const createWindow = (options)=>{
     return ipcRenderer.invoke("create-browser-windows",JSON.stringify(options));
 };
 
-const createPDFFile = (options)=>{
-    return new Promise((resolve,reject)=>{
-        const dir = getPath("temp");
-        options = Object.assign({},options);
-        let {content,filename,fileName,charset,fileExtension,extension} = options;
-        fileName = defaultStr(filename,fileName)
-        if(isDataURL(content)){
-            content = isDataURL.toBase64(content);
-        }
-        if(isBase64(content)){
-            content = Buffer.from(content,'base64');
-        } else {
-           content = null;
-        }
-        if(!content){
-          console.warn('type de contenu invalide!! impression création fichier electron');
-          return null;
-        }
-        fileName = defaultStr(fileName,uniqid("generated-printed-pdf-file-name"))
-        fileExtension = defaultStr(fileExtension,extension,'pdf').split(".")[0];
-        charset = defaultStr(charset,'utf-8')
-        fileName = sanitize(fileName);
-        if(!fileName.endsWith(`.${fileExtension}`)){
-            fileName += "."+fileExtension
-        }
-        return fs.writeFile(path.join(dir,fileName), content,{charset},(err)=>{
-            if(!err) {
-                const p = path.join(dir,fileName);
-                const fileUrl = 'file://'+p.replaceAll("\\","/");
-                const filePathUrl = 'file://'+p;
-                resolve({content,fileName,filename:fileName,path:p,filePathUrl,filePathUri:filePathUrl,fileUrl,filePath:p,fileUri:fileUrl})
-            } else {
-                reject(err);
-            }
-        })    
-    })
-}
-
 const isWin = process.platform === "win32"? true : false;
 const isLinux = process.platform === "linux"? true : false;
 const isMac = process.platform =='darwin';
@@ -158,6 +121,47 @@ const getMem = (unit,key)=>{
             return memory / (1024 * 1024 * 1024);
     }
     return memory;
+}
+
+const createPDFFile = (options)=>{
+    return new Promise((resolve,reject)=>{
+        const dir = getPath("temp");
+        options = Object.assign({},options);
+        let {content,filename,fileName,charset,fileExtension,extension} = options;
+        fileName = defaultStr(filename,fileName)
+        if(dataURL.isDataURL(content)){
+            content = dataURL.toBase64(content);
+        }
+        if(isBase64(content)){
+            content = Buffer.from(content,'base64');
+        } else {
+           content = null;
+        }
+        if(!content){
+          console.warn('type de contenu invalide!! impression création fichier electron');
+          return null;
+        }
+        fileName = defaultStr(fileName,uniqid("generated-printed-pdf-file-name"))
+        fileExtension = getExtension(fileName) || "pdf";
+        if(fileExtension !=="pdf" || !fileExtension.endsWith("pdf")){
+            fileExtension+="pdf";
+        }
+        charset = defaultStr(charset,'utf-8')
+        fileName = sanitize(fileName);
+        if(!fileName.endsWith(`.${fileExtension}`)){
+            fileName += "."+fileExtension
+        }
+        return fs.writeFile(path.join(dir,fileName), content,{charset},(err)=>{
+            if(!err) {
+                const p = path.join(dir,fileName);
+                const fileUrl = FILE.toUrl(p);
+                const filePathUrl = FILE.toUrl(p);
+                resolve({content,fileName,filename:fileName,path:p,filePathUrl,filePathUri:filePathUrl,fileUrl,filePath:p,fileUri:fileUrl})
+            } else {
+                reject(err);
+            }
+        })    
+    })
 }
 
 const ELECTRON = {
@@ -253,6 +257,9 @@ const ELECTRON = {
             DOWNLOADS : path.join(APP_PATH,"downloads"),
             DESKTOP : getPath("desktop"),//The current user's Desktop directory.
         }
+    },
+    get FILE(){
+        return FILE;
     },
     ///retourne le chemin dont la chaine de caractère est passé en paramètre
     get getPath(){
@@ -427,7 +434,7 @@ const ELECTRON = {
     get setTitle(){
         return (title) =>{
             if(title && typeof title =="string"){
-                ipcRenderer.send("set-main-window-title",title);
+                return ipcRenderer.sendSync("set-main-window-title",title);
             }
         };
     },
@@ -486,7 +493,9 @@ const ELECTRON = {
         }
     },
     get getLoadedAppUrl(){
-        return ipcRenderer.sendSync("get-loaded-app-url");
+        return ()=>{
+            return ipcRenderer.sendSync("get-loaded-app-url")
+        };
     },
     get mainSession(){
         return {
@@ -563,3 +572,178 @@ const rendererProcessIndex = projectRoot && fs.existsSync(path.resolve(projectRo
 // dans lequel exporter une fonction prenant en paramètre l'objet electron, que l'on peut étendre et le rendre accessible depuis l'application
 const rendererProcess = rendererProcessIndex && require(`${rendererProcessIndex}`);    
 (typeof rendererProcess ==='function') && rendererProcess(ELECTRON);
+
+
+/**** affiche le repertoire de sélection d'un fichier 
+*  options : {
+*      mediaType || mimeType, le type de media à récupérer
+*  }
+*/
+FILE.browse = FILE.showFileExplorer = (options)=>{
+    /*** retourne plusieurs fichiers sélectionnés dans un tableau.
+     *  la promesse généère un tableau contenant les différents fichiers sélectionnés
+     */
+ 
+    /**
+    *
+    * @returns Promise containing selected file's information,
+    * MIME type, display name, and original URI.
+    *  return : {
+            mediaType: string;
+            name: string;
+            uri: string;
+    * }
+    */
+    options = Object.assign({},options);
+    const configKeyName = "lastOpenedFilePath";
+    let defaultPath = isNonNullString(options.defaultPath) && fs.existsSync(options.defaultPath) && options.defaultPath || session.get(configKeyName);
+    if(!isNonNullString(defaultPath) || !fs.existsSync(defaultPath)){
+        defaultPath = undefined;
+    }
+    return new Promise((resolve,reject)=>{
+        ELECTRON.showOpenDialog({
+            ...options,
+            properties: ['openFile','multiSelections'],
+            defaultPath
+        }).then((r)=>{
+            if(r){
+                if(r.canceled){
+                    return r.canceled;
+                }
+                if(Array.isArray(r.filePaths)){
+                    let files = [];
+                    session.set(configKeyName,path.dirname(r.filePaths[0]))
+                    for(let i in r.filePaths){
+                        files.push({
+                            path : r.filePaths[i],
+                            name : path.basename(r.filePaths[i])
+                        })
+                    }
+                    resolve(files);
+                }
+            }
+        }).catch(reject);
+    })
+ }
+ 
+ /**** sauvegarde un fichier sur le disque 
+     *  Si directory est dir sont à undefined, àlors, l'explorateur d'enregistrement de fichier sera proposé à l'utilisateur de sélectionner l'emplacement à enregistrer
+     *  le fichier sur le disque
+     *  @param {object} {
+     *      content {mix}: le contenu du fichier à enregistrer
+     *      charset {string}: L'encodage à utiliser pour l'enregistrement du fichier, par défaut utf-8
+     *      directory || dir {string} : le répertoire dans lequel enregistrer le fichier
+     *      fileName {string} : le nom du fichier à enregistrer
+     *  }
+    */
+FILE.write = ({content,isBinary,charset,isBase64:isB64,directory,dir,fileName})=>{
+    directory = typeof directory =="string" && directory || typeof dir =="string" && dir || "";
+    const configKeyName = "lastSavedDirectoryPath";
+    let defaultPath = session.get(configKeyName);
+    if(!isNonNullString(defaultPath) || !fs.existsSync(defaultPath)){
+        defaultPath = undefined;
+    }
+    if(!directory){
+        directory = defaultPath || getPath("documents");
+        if(!defaultPath && appName){
+            directory = path.resolve(directory,appName);
+        }
+    }
+    return new Promise((resolve,reject)=>{
+        if(!isNonNullString(fileName)){
+           reject({status:false,message : 'Non de fichier invalide'});
+            return;
+        }
+        fileName = sanitizeFileName(fileName);
+        charset = typeof charset =="string" && charset || 'utf8';
+        const writingOpts = {charset};
+        if(dataURL.isDataURL(content)){
+            content = dataURL.toBase64(content);
+        }
+        if(isBase64(content) || isB64){
+            writingOpts.encoding = 'base64';
+        } else {
+            writingOpts.encoding = charset;
+        }
+        if(isBinary ===true){
+            delete writingOpts.encoding;
+            writingOpts.encoding = "binary";
+            return FILE.saveBinary({content,directory,fileName,charset,...writingOpts,}).then(resolve).catch(reject);
+        }
+        if(FILE.createDirectory(directory)){
+            const ext = getExtension(fileName,true);
+            const options = {
+                //Placeholder 1
+                title: "Sauvegarder "+fileName,
+                
+                //Placeholder 2
+                defaultPath : path.resolve(directory,fileName),
+                
+                //Placeholder 4
+                buttonLabel : "Enregistrer",
+                
+                //Placeholder 3
+                filters : ext ? [{name: 'Fichier de Type .'+ext, extensions: [ext]}]: undefined
+            }
+            return ELECTRON.showSaveDialog(options).then((fName)=>{
+                if(fName && fName?.canceled){
+                    return reject({message : "Opération annulée",status:false});;
+                }
+                if(fName && typeof fName =="object" && isNonNullString(fName.filePath)){
+                    fName = fName.filePath;
+                }
+                if(isNonNullString(fName) && !isBase64(fName)){
+                    fs.writeFile(fName, content,writingOpts,(err) => {
+                        if (err) {
+                           return reject(err);
+                        }
+                        session.set(configKeyName,path.dirname(fName));
+                        resolve({fName,path:fName,fileName:FILE.getFileName(fName,false),content});
+                    });
+                } else {
+                  reject({message : "Opération annulée",status:false});
+                }
+            }).catch((e)=>{
+                console.log(e,' is error writing electorn file')
+                reject(e);
+            });
+        } else {
+           reject({status : false,message : 'Impossible de créer le répertoire '+directory});
+        }
+    })
+}
+FILE.blobToBase64 = function(blob){
+    if(!(blob instanceof Blob)) return Promise.reject({message:'Invalid blob'});
+    if(typeof FileReader =='undefined') return Promise.reject({message : `File API is not defined on this platform`});
+    // Define the FileReader which is able to read the contents of Blob
+    const reader = new FileReader();
+    return new Promise((resolve,reject)=>{
+        // The magic always begins after the Blob is successfully loaded
+        reader.onload = function () {
+            // Since it contains the Data URI, we should remove the prefix and keep only Base64 string
+            resolve(reader.result.replace(/^data:.+;base64,/, ''));
+        };
+        // Since everything is set up, let’s read the Blob and store the result as Data URI
+        reader.readAsDataURL(blob);
+        reader.onerror = reject;
+    });
+}
+FILE.saveBinary = ({content,charset,data,mimeType,directory,mime,fileName})=>{
+    mime = typeof mime =="string" && mine || typeof mimeType =="string" && mimeType ||"";
+    return new Promise((resolve,reject)=>{
+        data = typeof data !=="undefined" && data || content;
+        charset =  (typeof charset==="string"? charset : 'utf8').trim();
+        if(charset[0] === ";"){
+            charset = charset.substr(1,charset.length-1);
+        }
+        fileName = sanitizeFileName(fileName);
+        FILE.blobToBase64(data instanceof Blob ? data : new Blob(isArray(data)?data:[data], { type: mime + ";" +charset })).then((content)=>{
+            return FILE.write({content,mimeType:mime,mime,charset,fileName,directory}).then(resolve).catch(reject)
+        }).catch(reject);
+    })
+}
+FILE.saveText = (options)=>{
+    options = Object.assign({},options);
+    options.mime = options.mimeType = typeof options.mime =="string" && options.mime || typeof mimeType =="string" && options.mimeType || "text/plain";
+    return FILE.saveBinary(options);
+}

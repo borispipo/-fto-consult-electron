@@ -1,7 +1,7 @@
 const { program } = require('commander');
 const path = require("path");
 const fs = require("fs");
-const {isValidUrl,debounce,json:{isJSON,parseJSON},urlExists} = require("./src/utils");
+const {isValidUrl,debounce,json:{isJSON,parseJSON}} = require("./src/utils");
 const {app, BrowserWindow,Tray,Menu,MenuItem,globalShortcut,systemPreferences,powerMonitor,ipcMain,dialog, nativeTheme} = require('electron')
 const isObj = x => x && typeof x =='object';
 const currentProcessId = require('process').pid || null;
@@ -135,11 +135,10 @@ function createBrowserWindow (options){
     const url = isValidUrl(options.url) || typeof options.url ==='string' && options.url.trim().startsWith("file://") ? options.url : undefined;
     const file = options.file && typeof options.file ==="string" && fs.existsSync(path.resolve(options.file)) && options.file || null;
     if(url){
-      urlExists(url).then((u)=>{
-        window.loadURL(url);
+      window.loadURL(url).then((u)=>{
         window.loadedUrl = url;
       }).catch(e=>{
-        console.log("parsing url ",e,url);
+        console.log("loading url from main window ",e,url);
         if(file){
           window.loadFile(path.resolve(file));
         }
@@ -490,8 +489,12 @@ function createWindow () {
   ipcMain.on("set-main-window-title",(event,title)=>{
     if(mainWindow !== null){
         const loadedUrl = isValidUrl(mainWindow?.loadedUrl) && mainWindow.loadedUrl?.trim() ||"";
-        mainWindow.setTitle(`${title}${loadedUrl?` | ${loadedUrl}`:""}`);
-    }
+        title = `${title}${loadedUrl && !title.includes(loadedUrl)?` [${loadedUrl}]`:""}`;
+        mainWindow.setTitle(title);
+        event.returnValue = title;
+        return event.returnValue ;
+    } else event.returnValue = title;
+    return event.returnValue ;
   });
   
   ipcMain.handle("show-open-dialog",function(event,options){
@@ -590,7 +593,7 @@ app.on('window-all-closed', () => {
 });
 
 ipcMain.on("get-loaded-app-url",(event)=>{
-  const p = mainWindow !== null && mainWindow ? mainWindow?.loadedUrl : undefined;
+  const p = mainWindow !== null && mainWindow && isValidUrl(mainWindow?.loadedUrl) ? mainWindow?.loadedUrl : '';
   event.returnValue = p;
   return p;
 });

@@ -5,13 +5,14 @@ module.exports = function (url) {
         return Promise.reject(err);
     }
     try {
-        const parsedUrl = new URL(url);
+        const parsedUrl = new URL(url.replace("//localhost","//127.0.0.1"));
         const options = {
             method: 'HEAD',
             host: parsedUrl.host,
             port: parsedUrl.port || undefined,
             path: parsedUrl.pathname
         };
+        console.log(options," is options heeeee");
         return new Promise((resolve,reject)=>{
             const req = http.request(options, function (r) {
                 if([200,308].includes(r.statusCode) || /4\d\d/.test(`${r.statusCode}`) === false){
@@ -22,7 +23,8 @@ module.exports = function (url) {
             req.on('error', reject);
             req.end();
         })
-    } catch{
-        return Promise.reject(err);
+    } catch(e) {
+        console.log(e," parsing url to check")
+        return Promise.reject(e);
     }
 }

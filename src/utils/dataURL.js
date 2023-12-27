@@ -4,10 +4,13 @@ function isDataURL(s) {
     return s && typeof s ==='string' && !s.includes("data:image/x-icon") && !!s.match(isDataURLRegex);
 }
 
-isDataURL.toBase64 = (dataURLStr)=>{
+const toBase64 = (dataURLStr)=>{
     if(!isDataURL(dataURLStr)) return undefined;
     return dataURLStr.replace(/^data:.+;base64,/, '')
 }
 
-module.exports = isDataURL;
+module.exports = {
+    isDataURL,
+    toBase64,
+};
 
