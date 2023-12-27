@@ -2,7 +2,7 @@ const { program } = require('commander');
 const path = require("path");
 const fs = require("fs");
 const {isValidUrl,debounce,json:{isJSON,parseJSON}} = require("./src/utils");
-const {app, BrowserWindow,Tray,Menu,MenuItem,globalShortcut,systemPreferences,powerMonitor,ipcMain,dialog, nativeTheme} = require('electron')
+const {app, BrowserWindow, desktopCapturer,Tray,Menu,MenuItem,globalShortcut,systemPreferences,powerMonitor,ipcMain,dialog, nativeTheme} = require('electron')
 const isObj = x => x && typeof x =='object';
 const currentProcessId = require('process').pid || null;
 
@@ -163,6 +163,14 @@ app.whenReady().then(() => {
     });
     appIsReady = true;
 });
+
+const getMainBrowserTitle = ()=>{
+  if(!mainWindow || !mainWindow?.getTitle) {
+    return "";
+  } else {
+    return mainWindow.getTitle();
+  }
+}
 
 function createWindow () { 
     // Créer le browser window
@@ -372,6 +380,10 @@ function createWindow () {
     event.returnValue = JSON.stringify(p);
     return p;
   });
+  ipcMain.on("get-main-browser-title",(event)=>{
+    event.returnValue = getMainBrowserTitle();
+    return event.returnValue;
+  });
   ipcMain.on("set-session",(event,key,value)=>{
     if(isJSON(value)){
       value = parseJSON(value);
@@ -486,10 +498,10 @@ function createWindow () {
         })
     })
   }
-  ipcMain.on("set-main-window-title",(event,title)=>{
+  ipcMain.on("set-main-window-title",(event,title,addSuffix)=>{
     if(mainWindow !== null){
         const loadedUrl = isValidUrl(mainWindow?.loadedUrl) && mainWindow.loadedUrl?.trim() ||"";
-        title = `${title}${loadedUrl && !title.includes(loadedUrl)?` [${loadedUrl}]`:""}`;
+        title = `${title}${loadedUrl && addSuffix!==false && !title.includes(loadedUrl)?` [${loadedUrl}]`:""}`;
         mainWindow.setTitle(title);
         event.returnValue = title;
         return event.returnValue ;
@@ -596,6 +608,39 @@ ipcMain.on("get-loaded-app-url",(event)=>{
   const p = mainWindow !== null && mainWindow && isValidUrl(mainWindow?.loadedUrl) ? mainWindow?.loadedUrl : '';
   event.returnValue = p;
   return p;
+});
+
+ipcMain.handle("get-desktop-capturer-source",async (event,options)=>{
+  if(isJSON(options)){
+    options = JSON.parse(options);
+  }
+  options = Object.assign({},options);
+  const {sourceName} = options;
+  if(!Array.isArray(options.types) || !options.types.length){
+    options.types = ['window', 'screen'];
+  }
+  let electronSource = null;
+  const browserTitle = getMainBrowserTitle();
+  try {
+    const sources = await desktopCapturer.getSources(options);
+    let result = [];
+    for (const source of sources) {
+      console.log(browserTitle," is browser title "," is source name ",source.name)
+      if (source.name?.includes('Electron')) {
+        electronSource = source;
+      } else if(sourceName && typeof sourceName =="string" && source.name.toUpperCase().includes(sourceName.toUpperCase()) || source.name.toUpperCase().includes(appName?.toUpperCase()) || source.name?.toUpperCase().includes(browserTitle.toUpperCase())){
+          result.push(source);  
+      }
+    }
+    if(electronSource && !result.length){
+        result.push(electronSource);
+    }
+    event.returnValue = JSON.stringify(result[0]);
+  } catch(e){
+    console.log(e," getting desktop capturer sources");
+    event.returnValue = null;
+  }
+  return event.returnValue;
 });
 
 const nodeProcessIDsessionName = "node-process-id";

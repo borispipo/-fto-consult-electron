@@ -5,6 +5,12 @@
 const {stringify:stringifyJSON,parse} = JSON;
 const isRegExp = require("./isRegex");
 
+function isJSON (json_string){
+    if(!json_string || typeof json_string != 'string') return false;
+    var text = json_string;
+    return !(/[^,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]/.test(text.replace(/"(\\.|[^"\\])*"/g, '')));
+}
+
 module.exports.decycle = function decycle(obj, stack = []) {
     if(typeof obj ==='function') return undefined;
     if (!obj || typeof obj !== 'object')
@@ -26,11 +32,7 @@ module.exports.stringify = function(jsonObj,decylcleVal){
     return isJSON(jsonObj) ? jsonObj : JSON.stringify(decylcleVal !== false ? decycle(jsonObj) : jsonObj);
 }
 
-module.exports.isJSON = function (json_string){
-    if(!json_string || typeof json_string != 'string') return false;
-    var text = json_string;
-    return !(/[^,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]/.test(text.replace(/"(\\.|[^"\\])*"/g, '')));
-}
+module.exports.isJSON = isJSON;
 
 /***
  * parse JSON string recursively

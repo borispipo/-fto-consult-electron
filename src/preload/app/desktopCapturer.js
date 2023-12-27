@@ -1,34 +1,80 @@
-module.exports = (ELECTRON)=>{
-    let ProgressBar = require("./ProgressBar")
-    let progressBarCounter = 0;
-    function getUserMedia(constraints) {
-        let check = typeof constraints === "boolean"? true : false;
-        if(check){
-            constraints = {};
-        }
-        // if Promise-based API is available, use it
-        if (isObj(navigator.mediaDevices)) {
-            if(check === true) return true;
-            return navigator.mediaDevices.getUserMedia(constraints);
-        }
-          
-        // otherwise try falling back to old, possibly prefixed API...
-        var legacyApi = navigator.getUserMedia || navigator.webkitGetUserMedia ||
-          navigator.mozGetUserMedia || navigator.msGetUserMedia;
-        if(check === true){
-            return legacyApi ? true : false;
-        }
-        if (legacyApi) {
-          return new Promise(function (resolve, reject) {
-            legacyApi.bind(navigator)(constraints, resolve, reject);
-          });
-        }
-        return Promise.reject({status:false,msg:"user media not available"})
+
+const {ipcRenderer } = require('electron');
+const uniqid = require("../../utils/uniqid");
+const {isJSON,parseJSON} = require("../../utils/json");
+
+let showPreloaderOnScreenCaptureRef = true;
+
+function getUserMedia(constraints) {
+    // if Promise-based API is available, use it
+    if (typeof navigator !=="undefined" && navigator && navigator?.mediaDevices && typeof navigator?.mediaDevices?.getUserMedia =='function') {
+        return navigator.mediaDevices.getUserMedia(constraints);
     }
-    const { desktopCapturer,ipcRenderer } = require('electron')
-    let SECRET_KEY = require("../app.config").id;
+    // otherwise try falling back to old, possibly prefixed API...
+    const legacyApi = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+    if (legacyApi) {
+      return new Promise(function (resolve, reject) {
+        return legacyApi.bind(navigator)(constraints, resolve, reject);
+      });
+    }
+    return Promise.reject({status:false,msg:"user media not available"})
+}
+
+async function getUserMediaAsync(constraints) {
+    try {
+      const stream = await getUserMedia(constraints);
+      return stream;
+    } catch (e) {
+      console.error('navigator.getUserMedia error:', e);
+    }
+    return null;
+}
+
+const audio2videoConstraints = {
+    audio: {
+        mandatory: {
+          chromeMediaSource: 'desktop'
+        }
+      },
+      video: {
+        mandatory: {
+          chromeMediaSource: 'desktop'
+        }
+      }
+}
+function formatDate(date) {
+    const d = new Date(date),
+        month = String(d.getMonth() + 1),
+        day = String(d.getDate()),
+        year = String(d.getFullYear());
+
+    if (month.length < 2) 
+        month = '0' + month;
+    if (day.length < 2) 
+        day = '0' + day;
+    let hours = d.getHours(),minutes = d.getMinutes();
+    if(hours < 10){
+        hours = `0${hours}`;
+    }
+    return [day,month,year].join('-')+` ${hours}:${minutes}`;
+}
+module.exports = (ELECTRON)=>{
+    const progressBar = ELECTRON.progressBar;
+    let progressBarCounter = 0;
+    let recorder = null, blobs= [];
+    const getRecordingStatus = ()=>{
+        const ret = {};
+        ['isRecording','isPaused','isInactive'].map((v)=>{
+            if(recorder){
+                ret[v] = recorder.state == v.toLowerCase().split("is")[1]? true : false
+            } else {
+                ret[v] = false;
+            }
+        });
+        return ret;
+    };
     ipcRenderer.on("click-on-system-tray-menu-item",(event,opts)=>{
-        opts = defaultObj(opts);
+        opts = Object.assign({},opts);
         switch(opts.action){
             case "pauseRecording":
                 return pauseRecording();
@@ -39,18 +85,13 @@ module.exports = (ELECTRON)=>{
         }
     }),
     updateSystemTray = ()=>{
-        let {isPaused,isRecording} = APP.desktopCapturer.getRecordingStatus();
-        /*ipcRenderer.send("update-system-tray",{
-            tooltip : isRecording? ("La capture vidéo est en cours d'enregistrement"):(isPaused? "La capture vidéo est en pause":"La capture vidéo est inactive"),
-            contextMenu : isRecording || isPaused? JSON.stringify([
-                { label: isRecording? 'Mettre en pause':'Relancer la capture vidéo',action:isRecording?'pauseRecording':'resumeRecording'},
-                { label: 'Arréter la capture vidéo',action:'stopRecording'}
-            ]): null
-        });*/
-        if(!APP.COMPANY.showPreloaderOnScreenCapture){
+        const recordingStatus = getRecordingStatus();
+        const {isPaused,isRecording} = recordingStatus;
+        const canShowProgress = typeof showPreloaderOnScreenCaptureRef =="function"? showPreloaderOnScreenCaptureRef() : showPreloaderOnScreenCaptureRef;
+        if(!canShowProgress){
             if(progressBarCounter !== 0){
                 progressBarCounter = 0;
-                ProgressBar.set(0);
+                progressBar.set(0);
             }
             return false;
         }
@@ -59,65 +100,107 @@ module.exports = (ELECTRON)=>{
         } else if(isRecording){
             progressBarCounter+=2;
         } else progressBarCounter = 0;
-        ProgressBar.set(progressBarCounter);
+        progressBar.set(progressBarCounter);
     }
-    async function getUserMediaAsync(constraints) {
-        try {
-          const stream = await getUserMedia(constraints);
-          return stream;
-        } catch (e) {
-          console.error('navigator.getUserMedia error:', e);
-        }
-        return null;
-    }
-    function startRecording(opts) {
-        opts = defaultObj(opts)
-        var title = document.title;
+    const getSource = async function(options){
+        const title = document.title;
+        const SECRET_KEY = ELECTRON.appName || uniqid(`${''}app-desktop-capturer`);
         document.title = SECRET_KEY;
-        opts.video = defaultObj(opts.video);
-        let audio = isBool(opts.audio) && !opts.audio ? false : defaultObj(opts.audio);
-        let handleStream = defaultFunc(opts.handleStream), handleUserMediaError = defaultFunc(opts.handleUserMediaError)
-        let video = {
-            ...opts.video,
-            mandatory: {
-                ...defaultObj(opts.video.mandatory),
-                chromeMediaSource: 'desktop',
+        ELECTRON.setTitle(SECRET_KEY,false)
+        if(isJSON(options)){
+            options = parseJSON(options);
+        }
+        options = Object.assign({},options);
+        options.sourceName = typeof options.sourceName =="string" && options.sourceName || SECRET_KEY;
+        let r = await ipcRenderer.invoke("get-desktop-capturer-source",JSON.stringify(options));
+        if(isJSON(r)){
+            r = JSON.parse(r);
+        }
+        document.title = title;
+        ELECTRON.setTitle(title);
+        return Object.assign({},r);
+    };
+    
+    function handleStream(stream,options) {
+        const appName = ELECTRON.appName || uniqid(`${''}app-desktop-capturer`);
+        let {mimeType,fileName} = options;
+        recorder = new MediaRecorder(stream, { mimeType});
+        blobs = [];
+        recorder.ondataavailable = function(event) {
+            if(event.data.size > 0){
+                blobs.push(event.data);
+            }
+            updateSystemTray();
+        };
+        recorder.onstop = function(event){
+            updateSystemTray();
+            if(!blobs.length) return false;
+            fileName = `${typeof fileName ==="string" && fileName || "video-"+appName}.webm`;
+            return ELECTRON.FILE.write({content:new Blob(blobs, {type: mimeType}),mimeType,fileName}).catch((e)=>{
+                console.log("writing media video recorded file ",e);
+                throw e;
+            }).finally(()=>{
+                recorder = undefined;
+                blobs = [];
+            });
+        }
+        recorder.start(1000);
+        updateSystemTray();
+        return recorder;
+    }
+    
+    async function startRecording(opts) {
+        ///opts = Object.assign({},opts);
+        getRecordingStatusRef = opts.getRecordingStatus;
+        showPreloaderOnScreenCaptureRef = opts.showPreloaderOnScreenCapture;
+        const source = await getSource();
+        if(typeof source =="object" && source?.name && source?.id){
+            audio2videoConstraints.video.mandatory.chromeMediaSourceId = source.id;
+            const videoAndAudioStream = await getUserMediaAsync(audio2videoConstraints);
+            if(videoAndAudioStream){
+                return handleStream(videoAndAudioStream,opts);
+            }
+        } else {
+            throw {message : `Desktop source is not valid`};
+        }
+    }
+    function pauseRecording(){
+        if(!recorder || !getRecordingStatus().isRecording) return;
+        recorder.pause();
+        updateSystemTray();
+        return true;
+    }
+    function resumeRecording(){
+        if(!recorder || !getRecordingStatus().isPaused) return;
+        recorder.resume();
+        updateSystemTray();
+        return true;
+    }
+    function stopRecording(opts) {
+        if(!recorder) return false;
+        let s = getRecordingStatus();
+        if(!s.isPaused && !s.isRecording){
+            recorder = undefined;
+            return false;
+        }
+        if(recorder){
+            let s = getRecordingStatus();
+            if(s.isRecording || s.isPaused){
+                recorder.stop();
             }
         }
-        return  desktopCapturer.getSources({ types: ['window', 'screen'] }).then(function(sources) {
-            for (let i = 0; i < sources.length; i++) {
-                let src = sources[i];
-                if (src.name === SECRET_KEY) {
-                    document.title = title;
-                    video.mandatory.chromeMediaSourceId = src.id;
-                    if(audio){
-                        (async() => {
-                            const audioStream = await getUserMediaAsync(APP.desktopCapturer.getAudioConstraint())
-                            const videoStream = await getUserMediaAsync({audio:false,video})
-                            if(audioStream && videoStream){
-                                const combinedStream = new MediaStream([...videoStream.getVideoTracks(), ...audioStream.getAudioTracks()])
-                                handleStream(combinedStream)
-                            }
-                        })();
-                    } else {
-                        getUserMedia({audio:false,video}).then(handleStream).catch(handleUserMediaError);
-                    }
-                    return {sources,currentSource:src,isRecording:true};
-                }
-            }
-            return {sources,isRecording:false};
-        });
+        recorder = undefined;
+        return true;
     }
-
-    if(!isObj(ELECTRON.desktopCapturer)){
-        Object.defineProperties(ELECTRON,{
-            desktopCapturer : {
-                value : {
-                    updateSystemTray, 
-                    startRecording,
-                }
-                ,override:false,writable:false
-            }
-        })
-    }
+    ELECTRON.desktopCapturer = {
+        updateSystemTray, 
+        startRecording,
+        getRecordingStatus,
+        getSource,
+        startRecording,
+        pauseRecording,
+        resumeRecording,
+        stopRecording,
+    };
+    return ELECTRON.desktopCapturer;
 }

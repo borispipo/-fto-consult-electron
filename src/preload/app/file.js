@@ -361,7 +361,7 @@ let FILE = {
                 } else resolve(arg);
             };
             if(!isNonNullString(fileName)){
-                errorF({status:false,msg:'Non de fichier invalide'});
+                errorF({status:false,msg:'Nom de fichier invalide'});
                 return;
             }
             fileName = sanitizeFileName(fileName);

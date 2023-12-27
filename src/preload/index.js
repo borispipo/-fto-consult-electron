@@ -164,9 +164,31 @@ const createPDFFile = (options)=>{
     })
 }
 
+const setProgressBar = (progress)=>{
+    progress = Math.ceil(typeof progress !=='number'? 0 : progress);
+    if(progress < 0) progress = 0;
+    ipcRenderer.send("electron-window-set-progressbar",progress);
+}
+
 const ELECTRON = {
     get openPouchDBDatabase(){
         return require('websql');
+    },
+    get appName(){
+        return appName;
+    },
+    get progressBar (){
+        return {
+            get stop() {
+                return x=>setProgressBar(0);
+            },
+            get set(){
+                return setProgressBar;
+            },
+            get update(){
+                return setProgressBar;
+            },
+        }
     },
     get getBackupPath(){
         return (p)=>{
@@ -432,9 +454,9 @@ const ELECTRON = {
         return //new ProgressBar(options,app);
     },
     get setTitle(){
-        return (title) =>{
+        return (title,addSuffix) =>{
             if(title && typeof title =="string"){
-                return ipcRenderer.sendSync("set-main-window-title",title);
+                return ipcRenderer.sendSync("set-main-window-title",title,addSuffix);
             }
         };
     },
@@ -651,7 +673,7 @@ FILE.write = ({content,isBinary,charset,isBase64:isB64,directory,dir,fileName})=
     }
     return new Promise((resolve,reject)=>{
         if(!isNonNullString(fileName)){
-           reject({status:false,message : 'Non de fichier invalide'});
+           reject({status:false,message : 'Nom de fichier invalide',fileName});
             return;
         }
         fileName = sanitizeFileName(fileName);
@@ -665,7 +687,7 @@ FILE.write = ({content,isBinary,charset,isBase64:isB64,directory,dir,fileName})=
         } else {
             writingOpts.encoding = charset;
         }
-        if(isBinary ===true){
+        if(isBinary ===true || content instanceof Blob){
             delete writingOpts.encoding;
             writingOpts.encoding = "binary";
             return FILE.saveBinary({content,directory,fileName,charset,...writingOpts,}).then(resolve).catch(reject);
@@ -747,3 +769,5 @@ FILE.saveText = (options)=>{
     options.mime = options.mimeType = typeof options.mime =="string" && options.mime || typeof mimeType =="string" && options.mimeType || "text/plain";
     return FILE.saveBinary(options);
 }
+
+require("./app/desktopCapturer")(ELECTRON);
