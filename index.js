@@ -7,8 +7,9 @@ const isObj = x => x && typeof x =='object';
 const currentProcessId = require('process').pid || null;
 
 let appIsReady = false;
-
-const iconExtension = process.platform =="win32" ? "ico" : process.platform =='darwin' ? "incs" : "png";
+const isDarwin = process.platform =='darwin';
+const isWindow = process.platform =="win32";
+const iconExtension = isWindow ? "ico" :  isDarwin ? "incs" : "png";
 const iconName = `icon.${iconExtension}`;
 const logoIconName = `logo.${iconExtension}`;
 program
@@ -433,10 +434,16 @@ function createWindow () {
   });
     
   ipcMain.on("get-media-access-status",(event,mediaType)=>{
-    let p = systemPreferences.getMediaAccessStatus(mediaType);
+    const p = systemPreferences.getMediaAccessStatus(mediaType);
     event.returnValue = p;
     return p;
   });
+  
+  /**** retourne l'accès au partage de l'écran */
+  ipcMain.on("get-desktop-capturer-screen-access",(event)=>{
+     event.returnValue = isDarwin || systemPreferences.getMediaAccessStatus('screen') === 'granted';
+     return event.returnValue;
+  })
   
   ipcMain.on("ask-for-media-access",(event,mediaType)=>{
     systemPreferences.askForMediaAccess(mediaType);
@@ -609,7 +616,23 @@ ipcMain.on("get-loaded-app-url",(event)=>{
   event.returnValue = p;
   return p;
 });
-
+const getDesktopCapturerSources = async function(){
+  return desktopCapturer.getSources({types: ['window', 'screen']}).then(async sources => {
+      return sources.map(source => {
+          source.thumbnailURL = source.thumbnail.toDataURL();
+          return source;
+      });
+  });
+}
+ipcMain.handle("get-desktop-capturer-sources",async (event,options)=>{
+  if(isJSON(options)){
+    options = JSON.parse(options);
+  }
+  options = Object.assign({},options);
+  const sources = await getDesktopCapturerSources(JSON.stringify(options));
+  event.returnValue = sources;
+  return sources;
+});
 ipcMain.handle("get-desktop-capturer-source",async (event,options)=>{
   if(isJSON(options)){
     options = JSON.parse(options);
@@ -625,7 +648,6 @@ ipcMain.handle("get-desktop-capturer-source",async (event,options)=>{
     const sources = await desktopCapturer.getSources(options);
     let result = [];
     for (const source of sources) {
-      console.log(browserTitle," is browser title "," is source name ",source.name)
       if (source.name?.includes('Electron')) {
         electronSource = source;
       } else if(sourceName && typeof sourceName =="string" && source.name.toUpperCase().includes(sourceName.toUpperCase()) || source.name.toUpperCase().includes(appName?.toUpperCase()) || source.name?.toUpperCase().includes(browserTitle.toUpperCase())){
@@ -635,7 +657,7 @@ ipcMain.handle("get-desktop-capturer-source",async (event,options)=>{
     if(electronSource && !result.length){
         result.push(electronSource);
     }
-    event.returnValue = JSON.stringify(result[0]);
+    event.returnValue = result[0];
   } catch(e){
     console.log(e," getting desktop capturer sources");
     event.returnValue = null;

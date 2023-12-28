@@ -30,17 +30,21 @@ async function getUserMediaAsync(constraints) {
     return null;
 }
 
-const audio2videoConstraints = {
-    audio: {
+const getConstraints = (options)=>{
+    options = Object.assign({},options);
+    return {
+        audio: options.audio !== false ? {
+            mandatory: {
+              chromeMediaSource: 'desktop'
+            }
+        } : false,
+       video: {
         mandatory: {
-          chromeMediaSource: 'desktop'
-        }
-      },
-      video: {
-        mandatory: {
-          chromeMediaSource: 'desktop'
+          chromeMediaSource: 'desktop',
+          chromeMediaSourceId : typeof options.source =='string' && options.source || undefined, 
         }
       }
+    }
 }
 function formatDate(date) {
     const d = new Date(date),
@@ -59,7 +63,6 @@ function formatDate(date) {
     return [day,month,year].join('-')+` ${hours}:${minutes}`;
 }
 module.exports = (ELECTRON)=>{
-    const progressBar = ELECTRON.progressBar;
     let progressBarCounter = 0;
     let recorder = null, blobs= [];
     const getRecordingStatus = ()=>{
@@ -85,6 +88,7 @@ module.exports = (ELECTRON)=>{
         }
     }),
     updateSystemTray = ()=>{
+        const progressBar = ELECTRON.progressBar;
         const recordingStatus = getRecordingStatus();
         const {isPaused,isRecording} = recordingStatus;
         const canShowProgress = typeof showPreloaderOnScreenCaptureRef =="function"? showPreloaderOnScreenCaptureRef() : showPreloaderOnScreenCaptureRef;
@@ -102,6 +106,9 @@ module.exports = (ELECTRON)=>{
         } else progressBarCounter = 0;
         progressBar.set(progressBarCounter);
     }
+    const getSources = async function(options){
+        return await ipcRenderer.invoke("get-desktop-capturer-sources",JSON.stringify(options)); 
+    }
     const getSource = async function(options){
         const title = document.title;
         const SECRET_KEY = ELECTRON.appName || uniqid(`${''}app-desktop-capturer`);
@@ -114,7 +121,7 @@ module.exports = (ELECTRON)=>{
         options.sourceName = typeof options.sourceName =="string" && options.sourceName || SECRET_KEY;
         let r = await ipcRenderer.invoke("get-desktop-capturer-source",JSON.stringify(options));
         if(isJSON(r)){
-            r = JSON.parse(r);
+            r = parseJSON(r);
         }
         document.title = title;
         ELECTRON.setTitle(title);
@@ -150,19 +157,28 @@ module.exports = (ELECTRON)=>{
     }
     
     async function startRecording(opts) {
-        ///opts = Object.assign({},opts);
-        getRecordingStatusRef = opts.getRecordingStatus;
-        showPreloaderOnScreenCaptureRef = opts.showPreloaderOnScreenCapture;
-        const source = await getSource();
-        if(typeof source =="object" && source?.name && source?.id){
-            audio2videoConstraints.video.mandatory.chromeMediaSourceId = source.id;
-            const videoAndAudioStream = await getUserMediaAsync(audio2videoConstraints);
-            if(videoAndAudioStream){
-                return handleStream(videoAndAudioStream,opts);
-            }
-        } else {
-            throw {message : `Desktop source is not valid`};
+        opts = Object.assign({},opts);
+        if(!opts.source || typeof opts.source !='string'){
+            throw {message : `Vous devez spécifier la source de l'écran dans les options de capture`,options:opts};
         }
+        const {source} = opts;
+        let hasFound = false;
+        const sources = (await getSources()).map((s)=>{
+            if(s.id === source){
+                hasFound = true;
+            }
+            return s.id;
+        });
+        if(!hasFound){
+            throw {message : `La source sélectionnées, d'id [${source}] de l'écran à capturer ne figure pas parmis les sources supportées : [${sources.join(",")}]`}
+        }
+        getRecordingStatusRef = opts.getRecordingStatus;
+        showPreloaderOnScreenCaptureRef = !!opts.showPreloaderOnScreenCapture;
+        const videoAndAudioStream = await getUserMediaAsync(getConstraints(opts));
+        if(videoAndAudioStream){
+            return handleStream(videoAndAudioStream,opts);
+        }
+        throw {message :`Flux de données vidée invalide`,options:opts}
     }
     function pauseRecording(){
         if(!recorder || !getRecordingStatus().isRecording) return;
@@ -192,6 +208,9 @@ module.exports = (ELECTRON)=>{
         recorder = undefined;
         return true;
     }
+    const getScreenAccess = ()=>{
+        return ipcRenderer.sendSync("get-desktop-capturer-screen-access");
+    }
     ELECTRON.desktopCapturer = {
         updateSystemTray, 
         startRecording,
@@ -201,6 +220,8 @@ module.exports = (ELECTRON)=>{
         pauseRecording,
         resumeRecording,
         stopRecording,
+        getSources,
+        getScreenAccess,
     };
     return ELECTRON.desktopCapturer;
 }
