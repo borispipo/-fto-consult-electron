@@ -6,6 +6,8 @@ const fs = require("fs");
 const path = require("path");
 const sanitize = require("sanitize-filename");
 const isNonNullString = require("./isNonNullString");
+const os = require("os");
+const newLine = os.EOL;
 const directoryExists = (dirPath)=>{
     return isDirectory(dirPath);
 }
@@ -118,6 +120,9 @@ const modExport = {
     fileExists : isFile,
     getExtension,
     copy,
+    newLine,
+    NEW_LINE : newLine,
+    EOL : newLine,
     getName,
     getFileName : getName,
     exists : function(path,...rest){
