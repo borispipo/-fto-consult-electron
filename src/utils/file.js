@@ -1,6 +1,7 @@
 const createDir = require("./createDir");
 const isWritable = require("./isWritable");
 const writeFile = require("./writeFile");
+const deleteFile = require("./deleteFileOrDirectory");
 const copy = require("./copy");
 const fs = require("fs");
 const path = require("path");
@@ -119,6 +120,8 @@ const modExport = {
     directoryExists,
     fileExists : isFile,
     getExtension,
+    deleteFile,
+    deleteDirectory : deleteFile,
     copy,
     newLine,
     NEW_LINE : newLine,
