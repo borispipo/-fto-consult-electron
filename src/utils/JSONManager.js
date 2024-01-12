@@ -37,6 +37,9 @@ module.exports = function(packagePath,...rest){
         get hasPackage(){
             return hasPackage;
         },
+        get exists(){
+            return ()=>hasPackage;
+        },
         get error(){return error},
         get set(){
             return (key,value)=>{
@@ -48,6 +51,9 @@ module.exports = function(packagePath,...rest){
         get filePath(){
             if(!hasPackage) return "";
             return packagePath;
+        },
+        get getFilePath(){
+            return ()=>packagePath;
         },
         get set(){
             return (key,value)=>{
