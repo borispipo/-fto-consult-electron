@@ -140,5 +140,5 @@ if(typeof String.prototype.removeAccents !=='function'){
 }
 
 module.exports = {
-  ltrim,rtrim,isNumberString:isStringNumber,isNumber:isStringNumber,sprintf,escapeQuote,escapeDoubleQuotes,escapeSingleQuotes,removeSpecialChars
+  ltrim,rtrim,isNumberString:isStringNumber,isNonNullString,isNumber:isStringNumber,sprintf,escapeQuote,escapeDoubleQuotes,escapeSingleQuotes,removeSpecialChars
 }
