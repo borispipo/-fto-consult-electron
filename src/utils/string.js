@@ -58,7 +58,7 @@ const isStringNumber = (str,withDecimal)=>{
   return /^\d+$/.test(str);
 } 
 
-export const sprintf = function(args){
+const sprintf = function(args){
   args = typeof args =='object' && args ? args : Array.prototype.slice.call(arguments);
   let str = typeof args[0] == "string"? args[0] : "";
   if(!str) return str;
@@ -81,7 +81,7 @@ const isNonNullString = x=>x && typeof x=='string';
  * @param {string} toEscape la chaine à eschaper
  * @param {string} replacement la chaine de remplacement
  */
- export const escapeQuote = (string,toEscape,replacement)=>{
+ const escapeQuote = (string,toEscape,replacement)=>{
   if(!isNonNullString(string)) return "";
   if(!isNonNullString(toEscape) || !isNonNullString(replacement)){
       return string;
@@ -90,7 +90,7 @@ const isNonNullString = x=>x && typeof x=='string';
 }
 
 /*** escape les signle quotes sur une chaine de caractère */
-export const escapeSingleQuotes = (string,withSingleQuotesClaues = true)=>{
+const escapeSingleQuotes = (string,withSingleQuotesClaues = true)=>{
   if(!isNonNullString(string)) return "";
   string = string.trim().ltrim("'").rtrim("'").trim();
   const str = string.replace(/'/g, "\\'");
@@ -102,7 +102,7 @@ if(!String.prototype.escapeSingleQuotes){
   }
 }
 
-export const escapeDoubleQuotes = (string,withDoubleQuotesClaues = true)=>{
+const escapeDoubleQuotes = (string,withDoubleQuotesClaues = true)=>{
   if(!isNonNullString(string)) return "";
   string = string.ltrim('"').rtrim('"').trim();
   const str = string.replace(/"/g, '\\"');
