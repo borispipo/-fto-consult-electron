@@ -78,12 +78,12 @@ module.exports = function(packagePath,...rest){
             return ()=>packagePath;
         },
         get set(){
-            return (key,value)=>{
+            return (key,value,...rest)=>{
                 if(!hasPackage) return false;
                 if(typeof key =='string'){
                     pJSON[key] = value;
                 } else if(isPlainObject(key)){
-                    extendObj(true,pJSON,key);
+                    extendObj(true,pJSON,key,value,...rest);
                 }
                 return pJSON;
             }
