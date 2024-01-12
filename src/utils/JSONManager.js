@@ -63,7 +63,7 @@ module.exports = function(packagePath,...rest){
                 return pJS !== undefined;
             }
         },
-        get set(){
+        get get(){
             return (key,value)=>{
                 if(!hasPackage) return undefined;
                 if(typeof key ==='string' || !key) return pJSON; 
