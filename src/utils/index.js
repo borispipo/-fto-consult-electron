@@ -35,4 +35,5 @@ module.exports = {
     JSONFileManager,
     JSONConfig : JSONFileManager,
     isDateObj : require("./isDateObj"),
+    string : require("./string"),
 }
