@@ -105,7 +105,7 @@ function extendObj (){
     return target;
 }
 module.exports.extendObj = extendObj;
-module.exports.cloneObject = function (source,cloneLevel) {
+const cloneObject = function (source,cloneLevel) {
     let level = 1;
     if (Array.isArray(source)) {
         const clone = [];
@@ -129,5 +129,7 @@ module.exports.cloneObject = function (source,cloneLevel) {
         return source;
     }
 }
+
+module.exports.cloneObject = cloneObject;
 
 Object.clone = Object.copy =  cloneObject;
