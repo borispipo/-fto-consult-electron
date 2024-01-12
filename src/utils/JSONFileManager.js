@@ -52,7 +52,7 @@ module.exports = function(packagePath,...rest){
                     return !!(key in packageJSON);
                 }
                 const keys = key.split(".");
-                const kk = keys.substring(0,keys.length-1);
+                const kk = keys.filter((_,i)=>i<keys.length-1).join(".");
                 const end = keys[keys.length-1];
                 const v = this.get(kk);
                 if(!isPlainObject(v)) return false;
@@ -61,21 +61,22 @@ module.exports = function(packagePath,...rest){
         },
         get get(){
             return (key)=>{
-                if(!hasPackage || typeof key ==='string' || !key) return packageJSON; 
+                if(!hasPackage || typeof key !=='string' || !key) return packageJSON; 
                 const keys = key.trim().split(".");
                 if(keys.length === 1){
                     return packageJSON[key] || undefined;
                 }
                 let pJS = packageJSON;
-                for(let i=0; i<keys.length-1;i++){
+                let i=0;
+                for(i=0; i<keys.length-1;i++){
                     const k = keys[i] || "";
                     if(!k) continue;
                     if(!isPlainObject(pJS)) return undefined;
                     pJS = pJS[k];
                 }
-                if(i === key.length-1){
+                if(i === keys.length-1){
                     if(!isPlainObject(pJS)) return undefined;
-                    return pJS[key.length-1] || undefined;
+                    return pJS[keys[i]] || undefined;
                 }
                 return undefined;
             }
