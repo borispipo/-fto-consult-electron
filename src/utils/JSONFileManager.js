@@ -46,30 +46,38 @@ module.exports = function(packagePath,...rest){
         get error(){return error},
         get hasKey(){
             return (key)=>{
-                if(typeof key !=='string' || !hasPackage) return false;
+                if(!hasPackage || typeof key !=='string' || !key) return false;
+                key = key.trim();
+                if(!key.includes(".")){
+                    return !!(key in packageJSON);
+                }
                 const keys = key.split(".");
-                let pJS = packageJSON;
-                if(keys.length === 1){
-                    return (key in packageJSON);
-                }
-                for(let i=0; i<keys.length-1;i++){
-                    const k = typeof keys[i] =="string" && keys[i] || "";
-                    if(!k) continue;
-                    if(!isPlainObject(pJS)) return false;
-                    pJS = pJS[k];
-                }
-                if(i === key.length-1 & i> 1){
-                    if(!isPlainObject(pJS)) return false;
-                    return (i in pJS);
-                }
-                return pJS !== undefined;
+                const kk = keys.substring(0,keys.length-1);
+                const end = keys[keys.length-1];
+                const v = this.get(kk);
+                if(!isPlainObject(v)) return false;
+                return !!(end in v);
             }
         },
         get get(){
-            return (key,value)=>{
-                if(!hasPackage) return undefined;
-                if(typeof key ==='string' || !key) return packageJSON; 
-                return packageJSON[key]||undefined;
+            return (key)=>{
+                if(!hasPackage || typeof key ==='string' || !key) return packageJSON; 
+                const keys = key.trim().split(".");
+                if(keys.length === 1){
+                    return packageJSON[key] || undefined;
+                }
+                let pJS = packageJSON;
+                for(let i=0; i<keys.length-1;i++){
+                    const k = keys[i] || "";
+                    if(!k) continue;
+                    if(!isPlainObject(pJS)) return undefined;
+                    pJS = pJS[k];
+                }
+                if(i === key.length-1){
+                    if(!isPlainObject(pJS)) return undefined;
+                    return pJS[key.length-1] || undefined;
+                }
+                return undefined;
             }
         },
         get filePath(){
