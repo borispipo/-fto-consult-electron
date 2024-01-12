@@ -22,6 +22,7 @@ module.exports = {
         process.exit(-1);
     },
     json : require("./json"),
+    JSON : require("./json"),
     replaceAll : require("./replaceAll"),
     base64 : require("./base64"),
     dataURL : require("./dataURL"),
