@@ -23,6 +23,7 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
   .option('-b, --build [boolean]', 'si ce flag est spécfifié alors l\'application sera compilée; combinée avec la commande start|package pour indiquer que l\'application sera à nouveau exportée ou pas.')
   .option('-a, --arch [architecture]', 'l\'architecture de la plateforme; Commande package')
   .option('-p, --platform [platform]', 'la plateforme à utiliser pour la compilation; commande package')
+  .option("-n, --neutralino [boolean|true]","s'il s'agit des options du clié généré par l'utilitaire @fto-consult/neut")
   .option('-l, --icon [iconPath]', 'le chemin vers le dossier des icones de l\'application : (Dans ce dossier, doit contenir une image icon.ico pour window, icon.incs pour mac et icon.png pour linux)')
   .option('-i, --import [boolean]', 'la commande d\'initialisation du package electron forge, utile pour le packaging de l\'application. Elle permet d\'exécuter le cli electron package, pour l\'import d\'un projet existant. Commande package. exemple : expo-ui electron package --import')
   .option('-f, --framework [frameworkName]', `Le nom du framework utilisé pour générer l\'application electron. Les frameworks supportés sont pour l\'instant : [${Object.keys(supportedFrameworks)}]. Le framework [expo] est le framework par défaut`)
@@ -31,7 +32,10 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
   
   const script = program.args[0];
   const options = program.opts();
-    const electronProjectRoot = path.resolve(projectRoot,"electron");
+  const isNeutralino = !!options.neutralino;
+  const isElectron = !isNeutralino;
+  const frameworkName = isNeutralino ? "neutralino" : "electron";
+    const electronProjectRoot = path.resolve(projectRoot,frameworkName);
     const opts = Object.assign({},typeof options.opts =='function'? options.opts() : options);
     let {out,arch,url,build,platform,import:packageImport,icon,framework} = opts;
     if(!framework || typeof framework !=='string' || !(framework in supportedFrameworks)){
@@ -41,9 +45,14 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
         throwError(`Invalid project root ${projectRoot}; project root must be different to ${dir}`);
     }
     const frameworkObj = supportedFrameworks[framework];
-    const isElectionInitialized = require("./is-initialized")(electronProjectRoot);
-    process.env.isElectron = true;
-    process.env.isElectronScript = true;
+    const isAppInitialized = require("./is-initialized")(electronProjectRoot);
+    if(isNeutralino){
+      process.env.isNeutralino = true;
+      process.env.isNeutralinoScript = true;    
+    } else {
+      process.env.isElectron = true;
+      process.env.isElectronScript = true;
+    }
     const buildOutDir = path.resolve(electronProjectRoot,"dist");
     const indexFile = path.resolve(buildOutDir,"index.html");
     const webBuildDir = path.resolve(projectRoot,frameworkObj.buildOutDir);
@@ -55,29 +64,34 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
     const homepage = packageObj.homepage;
     let cmd = undefined;
     icon = icon && typeof icon =="string" && fs.existsSync(path.resolve(icon)) && icon || undefined;
-    require("./create-index-file")({electronProjectRoot,appName:packageObj.name,icon});
+    if(isElectron){
+      require("./create-index-file")({electronProjectRoot,appName:packageObj.name,icon});
+    }
     const isInitScript = script =='init';
     let initPromise = undefined;
-    if(!isElectionInitialized || isInitScript){
-        if(!isInitScript){
-            console.log("initializing application ....");
+    if(!isAppInitialized || isInitScript){
+        if(isElectron){
+          if(!isInitScript){
+              console.log("initializing application ....");
+          }
+          initPromise =  require("./init")({
+             projectRoot,
+             electronDir,
+             electronProjectRoot,
+             icon,
+          });
+          if(isInitScript) return initPromise;
         }
-        initPromise =  require("./init")({
-           projectRoot,
-           electronDir,
-           electronProjectRoot,
-           icon,
-        });
-        if(isInitScript) return initPromise;
     }
-    const outDir = out && path.dirname(out) && path.resolve(path.dirname(out),"electron") || path.resolve(electronProjectRoot,"bin")
+    const outDir = out && path.dirname(out) && path.resolve(path.dirname(out),frameworkName) || path.resolve(electronProjectRoot,"bin")
     if(!createDir(outDir)){
         throwError("Impossible de créer le répertoire <<"+outDir+">> du fichier binaire!!");
     }
     const start = x=>{
        return new Promise((resolve,reject)=>{
+          const cmdPrefix = isNeutralino ? `npx neu run` : `electron "${path.resolve(electronProjectRoot,"index.js")}"`
           return Promise.resolve(initPromise).finally(()=>{
-            cmd = `electron "${path.resolve(electronProjectRoot,"index.js")}"  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
+            cmd = `${cmdPrefix}  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
             exec({
               cmd, 
               projectRoot,
@@ -111,6 +125,10 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
           next();
         }
       });
+      if(!isElectron && script !=="start"){
+         process.exit();
+         return;
+      }
       Promise.all([Promise.resolve(initPromise),promise]).then(()=>{
         if(!fs.existsSync(buildOutDir) || !fs.existsSync(indexFile)){
            throwError("répertoire d'export web invalide où innexistant ["+buildOutDir+"]");
