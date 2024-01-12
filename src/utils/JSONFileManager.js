@@ -4,31 +4,30 @@ const {isPlainObject,extendObj} = require("./object");
 /**** @see : https://www.npmjs.com/package/configstore?activeTab=readme*/
 
 module.exports = function(packagePath,...rest){
-    let hasPackage = true,pJSON = null,error=null;
+    let hasPackage = true,packageJSON = null,error=null;
     if(!packagePath || typeof packagePath !=="string" || !packagePath.toLowerCase().endsWith(".json")){
         hasPackage = false;
     }
     if(hasPackage){
         try {
             packagePath = path.resolve(packagePath);
-            const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
-            if(!isPlainObject(packageJson) || typeof packageJson?.name !=="string" || !packageJson?.name) {
-                hasPackage = false;
-            } else {
-                pJSON = packageJson;
+            const pJSON = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+            if(isPlainObject(pJSON)){
+                hasPackage = true;
+                packageJSON = pJSON;
             }
         } catch(e){
             hasPackage = false;
             error = e;
         }
     }
-    if(!isPlainObject(pJSON)){
+    if(!isPlainObject(packageJSON)){
         hasPackage = false;
     }
     const save = ()=>{
         if(!hasPackage) return false;
         try {
-            writeFile(packagePath,JSON.stringify(pJSON,null,"\t"));
+            writeFile(packagePath,JSON.stringify(packageJSON,null,"\t"));
             return fs.existsSync(packagePath);
         }catch(e){
             return false;
@@ -38,6 +37,9 @@ module.exports = function(packagePath,...rest){
         get hasPackage(){
             return hasPackage;
         },
+        get packagePath(){
+            return packagePath||null;
+        },
         get exists(){
             return ()=>hasPackage;
         },
@@ -46,9 +48,9 @@ module.exports = function(packagePath,...rest){
             return (key)=>{
                 if(typeof key !=='string' || !hasPackage) return false;
                 const keys = key.split(".");
-                let pJS = pJSON;
+                let pJS = packageJSON;
                 if(keys.length === 1){
-                    return (key in pJSON);
+                    return (key in packageJSON);
                 }
                 for(let i=0; i<keys.length-1;i++){
                     const k = typeof keys[i] =="string" && keys[i] || "";
@@ -66,8 +68,8 @@ module.exports = function(packagePath,...rest){
         get get(){
             return (key,value)=>{
                 if(!hasPackage) return undefined;
-                if(typeof key ==='string' || !key) return pJSON; 
-                return pJSON[key]||undefined;
+                if(typeof key ==='string' || !key) return packageJSON; 
+                return packageJSON[key]||undefined;
             }
         },
         get filePath(){
@@ -81,11 +83,11 @@ module.exports = function(packagePath,...rest){
             return (key,value,...rest)=>{
                 if(!hasPackage) return false;
                 if(typeof key =='string'){
-                    pJSON[key] = value;
+                    packageJSON[key] = value;
                 } else if(isPlainObject(key)){
-                    extendObj(true,pJSON,key,value,...rest);
+                    extendObj(true,packageJSON,key,value,...rest);
                 }
-                return pJSON;
+                return packageJSON;
             }
         },
         get persist(){

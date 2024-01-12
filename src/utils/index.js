@@ -1,6 +1,6 @@
 const path = require("path");
 const deleteFileOrDirectory = require("./deleteFileOrDirectory");
-const packageJSONManager = require("./JSONManager");
+const JSONFileManager = require("./JSONFileManager");
 module.exports = {
     ...require("./object"),
     createDir : require("./createDir"),
@@ -31,9 +31,8 @@ module.exports = {
     isObj : x=> typeof x =="object" && x && !Array.isArray(x),
     file : require("./file"),
     isNonNullString : require("./isNonNullString"),
-    JSONManager : packageJSONManager,
-    packageJSONManager,
-    JSONConfig : packageJSONManager,
-    packageJSONConfig : packageJSONManager,
+    JSONManager : JSONFileManager,
+    JSONFileManager,
+    JSONConfig : JSONFileManager,
     isDateObj : require("./isDateObj"),
 }
