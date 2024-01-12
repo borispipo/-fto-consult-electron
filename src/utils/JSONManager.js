@@ -42,6 +42,12 @@ module.exports = function(packagePath,...rest){
             return ()=>hasPackage;
         },
         get error(){return error},
+        get hasKey(){
+            return (key)=>{
+                if(typeof key !=='string' || !hasPackage) return false;
+                return (key in pJSON);
+            }
+        },
         get set(){
             return (key,value)=>{
                 if(!hasPackage) return undefined;
@@ -62,7 +68,7 @@ module.exports = function(packagePath,...rest){
                 if(typeof key =='string'){
                     pJSON[key] = value;
                 } else if(isPlainObject(key)){
-                    extendObj(pJSON,key);
+                    extendObj(true,pJSON,key);
                 }
                 return pJSON;
             }
