@@ -34,7 +34,6 @@ const {supportedFrameworks,script,options} = require("./program");
         throwError(`package.json file does not exist in ${projectRoot}. please make jure that your have running package script in ${framework} root application`);
     }
     const packageObj = require(`${packagePath}`);
-    const homepage = packageObj.homepage;
     let cmd = undefined;
     icon = icon && typeof icon =="string" && fs.existsSync(path.resolve(icon)) && icon || undefined;
     if(isElectron){
@@ -53,14 +52,10 @@ const {supportedFrameworks,script,options} = require("./program");
              electronProjectRoot,
              icon,
           });
-          if(isInitScript) return initPromise;
         } else {
           initPromise = exec({cmd:`npx @fto-consult/neut create neutralino`});
         }
-    }
-    const outDir = out && path.dirname(out) && path.resolve(path.dirname(out),frameworkName) || path.resolve(electronProjectRoot,"bin")
-    if(!createDir(outDir)){
-        throwError("Impossible de créer le répertoire <<"+outDir+">> du fichier binaire!!");
+        if(isInitScript) return initPromise;
     }
     const start = x=>{
        return new Promise((resolve,reject)=>{
@@ -77,37 +72,38 @@ const {supportedFrameworks,script,options} = require("./program");
     if(isValidUrl(url)){
       return start();
     } else {
-      const promise = new Promise((resolve,reject)=>{
-        const next = ()=>{
-          if(fs.existsSync(webBuildDir)){
-                return copy(webBuildDir,buildOutDir).catch(reject).then(resolve);
-            } else {
-              reject("dossier web-build exporté par electron innexistant!!");
-            }
+      Promise.resolve(initPromise).then(()=>{
+        return new Promise((resolve,reject)=>{
+          const next = ()=>{
+            if(fs.existsSync(webBuildDir)){
+                  return copy(webBuildDir,buildOutDir).catch(reject).then(resolve);
+              } else {
+                reject("dossier web-build exporté par "+frameworkName+" innexistant!!");
+              }
+          }
+          if(!url && (build || script ==="build" || !fs.existsSync(path.resolve(webBuildDir,"index.html")))){
+            console.log("exporting expo web app ...");
+              const JMan = JSONFileManager(packagePath);
+              const homepage = JMan.get("homepage");
+              JMan.set("homepage","./");
+              JMan.save();
+              cmd = frameworkObj.buildCmd;
+              return exec({cmd,projectRoot}).then(next).catch((e)=>{
+                console.log(e," exporting expo app");
+                reject(e);
+              }).finally(()=>{
+                console.log("resetting home page");
+                JMan.set("homepage",homepage);
+                JMan.save();
+              });
+          } else {
+            next();
+          }
+        })
+      }).then(()=>{
+        if(!fs.existsSync(buildOutDir) || !fs.existsSync(indexFile)){
+          throwError("répertoire d'export web invalide où innexistant ["+buildOutDir+"]");
         }
-        if(!url && (build || script ==="build" || !fs.existsSync(path.resolve(webBuildDir,"index.html")))){
-          console.log("exporting expo web app ...");
-          try {
-            writeFile(packagePath,JSON.stringify({...packageObj,homepage:"./"},null,"\t"));
-          } catch{}
-            cmd = frameworkObj.buildCmd;
-            return exec({cmd,projectRoot}).then(next).catch(reject).finally(()=>{
-              try {
-                writeFile(packagePath,JSON.stringify({...packageObj,homepage},null,"\t"));
-              } catch{}
-            });
-        } else {
-          next();
-        }
-      });
-      if(!fs.existsSync(buildOutDir) || !fs.existsSync(indexFile)){
-        throwError("répertoire d'export web invalide où innexistant ["+buildOutDir+"]");
-      }
-      if(isNeutralino){
-        const JM = JSONFileManager(path.resolve(electronProjectRoot,"neutralino.config.json"));
-        const dName = path.basename(buildOutDir); 
-      }
-      Promise.all([Promise.resolve(initPromise),promise]).then(()=>{
         if(script === "start") return start();
         if(!isElectron && script !=="start"){
           process.exit();

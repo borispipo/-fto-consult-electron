@@ -12,6 +12,7 @@ module.exports = (projectRoot,isNeutralino)=>{
             }
             return false;
         }
+        return false;
     }
     return fs.existsSync(path.resolve(projectRoot,"node_modules")) && fs.existsSync(path.resolve(projectRoot,"index.js")) 
         && fs.existsSync(path.resolve(projectRoot,"package.json")) 
