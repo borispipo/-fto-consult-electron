@@ -5,7 +5,7 @@ const  {createDir,electronDir,copy,exec,throwError,writeFile,isValidUrl,JSONFile
 const projectRoot = path.resolve(process.cwd());
 const dir = path.resolve(__dirname);
 const {supportedFrameworks,script,options} = require("./program");
-  const isNeutralino = !!options.neutralino;
+  const isNeutralino = !!options.neutralino || process.env.isNeutralino || process.env.isNeutralinoScript;
   const isElectron = !isNeutralino;
   const frameworkName = isNeutralino ? "neutralino" : "electron";
     const electronProjectRoot = path.resolve(projectRoot,frameworkName);

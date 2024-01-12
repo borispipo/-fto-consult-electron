@@ -1,4 +1,11 @@
 const { program } = require('commander');
+const supportedFrameworks = {
+  expo : {
+      buildCmd : "npx expo export:web",
+      buildOutDir : "web-build",
+  },
+}
+
 program.description('utilitaire cli pour la plateforme electron. NB : Le package electron doit être installé globalement via l\'instruction : npm i -g electron')
   .argument('<cmd>', 'la commande à exécuter (start,init,build,package). Start permet de démarrer le script electron, init permet d\'initialiser l\'application, build permet de compiler le code expo (exporter), package permet d\'effectuer le packaging de l\'application pour la distribution')
   //.option('-r, --project-root [dir]', 'le project root de l\'application')
@@ -16,19 +23,14 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
 
 try {
   program.parse();
-} catch{};
+} catch(e){
+  console.log(e," parsing electron-gen cli arguments")
+};
 
-const supportedFrameworks = {
-  expo : {
-      buildCmd : "npx expo export:web",
-      buildOutDir : "web-build",
-  },
-}
-
-  module.exports = {
+module.exports = {
     supportedFrameworks,
     program,
     options :  Object.assign({},program.opts()),
     args : program.args,
     script : program.args[0]||"",
-  }
+}
