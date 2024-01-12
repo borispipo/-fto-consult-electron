@@ -14,11 +14,6 @@ const {supportedFrameworks,script,options} = require("./program");
     if(!framework || typeof framework !=='string' || !(framework in supportedFrameworks)){
         framework = "expo";
     }
-    if(projectRoot == dir){
-        throwError(`Invalid project root ${projectRoot}; project root must be different to ${dir}`);
-    }
-    const frameworkObj = supportedFrameworks[framework];
-    const isAppInitialized = require("./is-initialized")(electronProjectRoot,isNeutralino);
     if(isNeutralino){
       process.env.isNeutralino = true;
       process.env.isNeutralinoScript = true;    
@@ -26,6 +21,11 @@ const {supportedFrameworks,script,options} = require("./program");
       process.env.isElectron = true;
       process.env.isElectronScript = true;
     }
+    if(projectRoot == dir){
+        throwError(`Invalid project root ${projectRoot}; project root must be different to ${dir}`);
+    }
+    const frameworkObj = supportedFrameworks[framework];
+    const isAppInitialized = require("./is-initialized")(electronProjectRoot,isNeutralino);
     const buildOutDir = path.resolve(electronProjectRoot,isNeutralino?"resources":"dist");
     const indexFile = path.resolve(buildOutDir,"index.html");
     const webBuildDir = path.resolve(projectRoot,frameworkObj.buildOutDir);
@@ -57,14 +57,19 @@ const {supportedFrameworks,script,options} = require("./program");
         }
         if(isInitScript) return initPromise;
     }
+    const outDir = out && path.dirname(out) && path.resolve(path.dirname(out),frameworkName) || path.resolve(electronProjectRoot,"bin")
+    if(!createDir(outDir)){
+        throwError("Impossible de créer le répertoire <<"+outDir+">> du fichier binaire!!");
+    }
     const start = x=>{
        return new Promise((resolve,reject)=>{
           const cmdPrefix = isNeutralino ? `npx neu run` : `electron "${path.resolve(electronProjectRoot,"index.js")}"`
           return Promise.resolve(initPromise).finally(()=>{
-            cmd = `${cmdPrefix}  ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}`; //--root ${electronProjectRoot}
+            const suffixes = isElectron ? `${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}` : ` -- ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url=${url}`:''}`
+            cmd = `${cmdPrefix} ${suffixes}`; //--root ${electronProjectRoot}
             exec({
               cmd, 
-              projectRoot,
+              projectRoot:isNeutralino?electronProjectRoot:projectRoot,
             });
           })
       });
@@ -89,10 +94,10 @@ const {supportedFrameworks,script,options} = require("./program");
               JMan.save();
               cmd = frameworkObj.buildCmd;
               return exec({cmd,projectRoot}).then(next).catch((e)=>{
-                console.log(e," exporting expo app");
+                console.error(e," exporting expo app");
                 reject(e);
               }).finally(()=>{
-                console.log("resetting home page");
+                console.error("resetting home page");
                 JMan.set("homepage",homepage);
                 JMan.save();
               });

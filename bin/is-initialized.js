@@ -4,7 +4,7 @@ const path = require("path");
 module.exports = (projectRoot,isNeutralino)=>{
     projectRoot = typeof projectRoot =='string' && projectRoot && fs.existsSync(projectRoot) && projectRoot || process.cwd();
     if(isNeutralino){
-        if(fs.existsSync(path.resolve(projectRoot,"neutralino.config.json") && fs.existsSync(path.resolve(projectRoot,"bin")))){
+        if(fs.existsSync(path.resolve(projectRoot,"neutralino.config.json")) && fs.existsSync(path.resolve(projectRoot,"bin"))){
             const dirs = ["neutralino-linux_arm64","neutralino-linux_armhf","neutralino-linux_x64","neutralino-mac_arm64","neutralino-mac_universal","neutralino-mac_x64","neutralino-win_x64.exe"];
             for(let i in dirs){
                 const f = dirs[i];
@@ -12,7 +12,7 @@ module.exports = (projectRoot,isNeutralino)=>{
             }
             return false;
         }
-        return false;
+        return false
     }
     return fs.existsSync(path.resolve(projectRoot,"node_modules")) && fs.existsSync(path.resolve(projectRoot,"index.js")) 
         && fs.existsSync(path.resolve(projectRoot,"package.json")) 
