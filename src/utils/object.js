@@ -1,7 +1,7 @@
 const isDateObj  = require("./isDateObj");
 const isRegExp = require("./isRegex");
 
-module.exports.isPlainObject = function isPlainObject ( obj ) {
+function isPlainObject ( obj ) {
     if(!obj || typeof obj =='boolean' || typeof obj =="number" || typeof obj =='string' || isDateObj(obj)) return false;
     const tStr = Object.prototype.toString.call(obj);
     if(tStr !== "[object Object]"  || tStr == '[object global]' || tStr == '[object Window]' || tStr == '[object DOMWindow]' || isRegExp(obj)){
@@ -23,12 +23,14 @@ module.exports.isPlainObject = function isPlainObject ( obj ) {
     return typeof Ctor === "function" && fnToString.call( Ctor ) === ObjectFunctionString;
 }
 
+module.exports.isPlainObject = isPlainObject;
+
 module.exports.isPlainObj = isPlainObject;
 /*** ajout de la fonction filter dans la props extendObj, pour filtrer les paramètres d'extension à la fonction
  *  si la liste des arguments passés en paramètres est supérieure ou égale à deux et que le dernier paramètres est une fonction 
  *  alors celui-ci est considéré comme un filtre sur les props à appeler
  */
-module.exports.extendObj = function extendObj (){
+function extendObj (){
     let name, src, copy, copyIsArray, clone,deepArray,filter = x=>true,//si l'on doit copier les tableaux en profondeur
         target = arguments[ 0 ] || {},
         i = 1,
@@ -102,7 +104,7 @@ module.exports.extendObj = function extendObj (){
     // Return the modified object
     return target;
 }
-
+module.exports.extendObj = extendObj;
 module.exports.cloneObject = function (source,cloneLevel) {
     let level = 1;
     if (Array.isArray(source)) {
