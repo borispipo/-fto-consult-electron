@@ -1,6 +1,6 @@
 {
   "name": "@fto-consult/electron-gen",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "description": "Utilitaire permettant de préparer l'application electron/desktop, preconstruit à l'aide du framework @fto-consult/expo-ui",
   "main": "index.js",
   "bin": {
@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "test",
-    "extract-asar": "npx @electron/asar extract app.asar <destfolder>"
+    "extract-asar": "npx @electron/asar extract app.asar <destfolder>",
+    "clear-npx-cache" : "npx clear-npx-cache"
   },
   "keywords": [
     "electron",
@@ -19,6 +20,7 @@
   "author": "Boris Fouomene",
   "license": "ISC",
   "dependencies": {
+    "chalk": "^5.3.0",
     "commander": "^11.1.0",
     "conf": "^10.2.0",
     "fs-extra": "^11.2.0",
