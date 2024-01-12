@@ -45,7 +45,22 @@ module.exports = function(packagePath,...rest){
         get hasKey(){
             return (key)=>{
                 if(typeof key !=='string' || !hasPackage) return false;
-                return (key in pJSON);
+                const keys = key.split(".");
+                let pJS = pJSON;
+                if(keys.length === 1){
+                    return (key in pJSON);
+                }
+                for(let i=0; i<keys.length-1;i++){
+                    const k = typeof keys[i] =="string" && keys[i] || "";
+                    if(!k) continue;
+                    if(!isPlainObject(pJS)) return false;
+                    pJS = pJS[k];
+                }
+                if(i === key.length-1 & i> 1){
+                    if(!isPlainObject(pJS)) return false;
+                    return (i in pJS);
+                }
+                return pJS !== undefined;
             }
         },
         get set(){

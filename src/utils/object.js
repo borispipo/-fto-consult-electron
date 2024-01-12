@@ -1,7 +1,7 @@
 const isDateObj  = require("./isDateObj");
 const isRegExp = require("./isRegex");
 
-module.exports.isPlainObject = function ( obj ) {
+module.exports.isPlainObject = function isPlainObject ( obj ) {
     if(!obj || typeof obj =='boolean' || typeof obj =="number" || typeof obj =='string' || isDateObj(obj)) return false;
     const tStr = Object.prototype.toString.call(obj);
     if(tStr !== "[object Object]"  || tStr == '[object global]' || tStr == '[object Window]' || tStr == '[object DOMWindow]' || isRegExp(obj)){
