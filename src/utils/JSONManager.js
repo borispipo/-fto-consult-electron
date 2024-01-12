@@ -10,6 +10,7 @@ module.exports = function(packagePath,...rest){
     }
     if(hasPackage){
         try {
+            packagePath = path.resolve(packagePath);
             const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
             if(!isPlainObject(packageJson) || typeof packageJson?.name !=="string" || !packageJson?.name) {
                 hasPackage = false;
