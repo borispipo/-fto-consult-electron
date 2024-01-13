@@ -1,7 +1,6 @@
 
 const {ipcRenderer } = require('electron');
-const uniqid = require("../../utils/uniqid");
-const {isJSON,parseJSON} = require("../../utils/json");
+const {uniqid,JSON : {isJSON,parseJSON}}= require("@fto-consult/node-utils");
 
 let showPreloaderOnScreenCaptureRef = true;
 
