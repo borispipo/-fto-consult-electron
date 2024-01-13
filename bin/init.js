@@ -58,7 +58,7 @@ module.exports = ({projectRoot,electronProjectRoot,icon})=>{
         if(!fs.existsSync(rendererFolderIndex)){
             copy(path.resolve(processesDir,"renderer.js"),rendererFolderIndex);
         }
-        createIndexFile(electronProjectRoot);
+        createIndexFile({electronProjectRoot});
         const gP = path.resolve(electronProjectRoot,".gitignore") ;
         if(!fs.existsSync(gP)){
           try {

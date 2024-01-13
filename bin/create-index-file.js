@@ -10,6 +10,6 @@ module.exports = ({electronProjectRoot,force,logo,appName})=>{
     const indexPath = path.resolve(electronProjectRoot,"index.js");
     if(!fs.existsSync(indexPath) || force === true){
         writeFile(indexPath,`require("${packageJSON.name}");`);
-}
+    }
     return indexPath;
 }
