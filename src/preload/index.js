@@ -171,7 +171,7 @@ const setProgressBar = (progress)=>{
 
 const ELECTRON = {
     get openPouchDBDatabase(){
-        return require('websql');
+        return require('./websql');
     },
     get appName(){
         return appName;
