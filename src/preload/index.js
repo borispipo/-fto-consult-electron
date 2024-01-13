@@ -1,6 +1,6 @@
 
 const {createDir,dataURL,FILE,base64:{isBase64},getAppDataPath,Session,uniqid,json:{isJSON,parseJSON},isNonNullString} = require("@fto-consult/node-utils");
-const postMessage = require("../../utils/postMessage");
+const postMessage = require("../utils/postMessage");
 const { contextBridge, ipcRenderer, shell,Notification} = require('electron')
 const appInstance = require("./app/instance");
 const path = require("path");
