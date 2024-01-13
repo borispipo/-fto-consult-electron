@@ -1,6 +1,6 @@
 const path= require("path");
 const fs = require("fs");
-const {exec,createDir,writeFile,copy} = require("../src/utils");
+const {exec,createDir,writeFile,copy} = require("@fto-consult/node-utils");
 const electronDir = path.resolve(__dirname,"..","src");
 const processesDir = path.resolve(electronDir,"processes");
 const createIndexFile = require("./create-index-file");
@@ -59,9 +59,6 @@ module.exports = ({projectRoot,electronProjectRoot,icon})=>{
             copy(path.resolve(processesDir,"renderer.js"),rendererFolderIndex);
         }
         createIndexFile(electronProjectRoot);
-        /**** copying all electron utils files */
-        const utilsPath = path.resolve(electronProjectRoot,"utils");
-        copy(path.resolve(electronDir,"utils"),utilsPath);
         const gP = path.resolve(electronProjectRoot,".gitignore") ;
         if(!fs.existsSync(gP)){
           try {

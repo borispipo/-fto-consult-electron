@@ -1,11 +1,10 @@
 
-const {createDir,dataURL,postMessage,base64:{isBase64},uniqid,json:{isJSON,parseJSON},isNonNullString} = require("../utils");
+const {createDir,dataURL,FILE,base64:{isBase64},getAppDataPath,Session,uniqid,json:{isJSON,parseJSON},isNonNullString} = require("@fto-consult/node-utils");
+const postMessage = require("../../utils/postMessage");
 const { contextBridge, ipcRenderer, shell,Notification} = require('electron')
-const getAppDataPath = require("../utils/getAppDataPath");
 const appInstance = require("./app/instance");
 const path = require("path");
 const fs = require("fs");
-const FILE = require("../utils/file");
 const {getExtension,sanitizeFileName} = FILE;
 const appName = ipcRenderer.sendSync("get-app-name");
 const projectRoot = ipcRenderer.sendSync("get-project-root");
@@ -46,7 +45,7 @@ if(typeof separator != 'string' || !separator){
         return filePath.substring(0, sepIndex+1);
     })();
 }
-const session = require("../utils/session")({appName});
+const session = Session({appName});
 const confPath = getAppDataPath(appName);
 if(confPath && typeof confPath =="string"){
     if(createDir(confPath)){

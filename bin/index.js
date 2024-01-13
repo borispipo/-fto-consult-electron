@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 const path= require("path");
 const fs = require("fs");
-const  {createDir,electronDir,copy,exec,throwError,writeFile,isValidUrl,JSONFileManager} = require("../src/utils");
+const electronDir = path.resolve(__dirname, "..");
+const  {createDir,copy,exec,throwError,writeFile,isValidUrl,JSONFileManager} = require("@fto-consult/node-utils");
 const projectRoot = path.resolve(process.cwd());
 const dir = path.resolve(__dirname);
 const {supportedFrameworks,script,options} = require("./program");

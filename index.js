@@ -1,12 +1,11 @@
 const { program } = require('commander');
 const path = require("path");
 const fs = require("fs");
-const {isValidUrl,debounce,json:{isJSON,parseJSON}} = require("./src/utils");
+const {isValidUrl,Session,debounce,json:{isJSON,parseJSON}} = require("@fto-consult/node-utils");
 const {app, BrowserWindow, desktopCapturer,Tray,Menu,MenuItem,globalShortcut,systemPreferences,powerMonitor,ipcMain,dialog, nativeTheme} = require('electron')
 const isObj = x => x && typeof x =='object';
 const currentProcessId = require('process').pid || null;
 
-let appIsReady = false;
 const isDarwin = process.platform =='darwin';
 const isWindow = process.platform =="win32";
 const iconExtension = isWindow ? "ico" :  isDarwin ? "incs" : "png";
@@ -57,7 +56,7 @@ const mainProcessRequired = mainProcessIndex && require(`${mainProcessIndex}`);
 const mainProcess = mainProcessRequired && typeof mainProcessRequired =='object'? mainProcessRequired : {};
 const execPath = app.getPath ('exe') || process.execPath;
 const APP_PATH = path.join(app.getPath("appData"),appName?.toUpperCase());
-const session = require("./src/utils/session")({appName});
+const session = Session({appName});
 const appUrl = require("./src/utils/appUrl")({appName});
 // Gardez une reference globale de l'objet window, si vous ne le faites pas, la fenetre sera
 if(!isValidUrl(pUrl) && !fs.existsSync(indexFilePath)){

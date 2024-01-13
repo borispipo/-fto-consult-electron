@@ -1,5 +1,5 @@
 const fs = require("fs");
-const writeFile = require("../src/utils/writeFile");
+const {writeFile} = require("@fto-consult/node-utils");
 const path = require("path");
 const packageJSON = require("../package.json");
 
