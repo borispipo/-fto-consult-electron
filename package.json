@@ -20,7 +20,7 @@
   "author": "Boris Fouomene",
   "license": "ISC",
   "dependencies": {
-    "@fto-consult/node-utils": "^1.3.4",
+    "@fto-consult/node-utils": "^1.4.6",
     "argsarray": "^0.0.1",
     "immediate": "^3.3.0",
     "node-machine-id": "^1.1.12",
