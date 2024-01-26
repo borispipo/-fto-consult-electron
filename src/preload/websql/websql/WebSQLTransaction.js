@@ -1,9 +1,9 @@
 'use strict';
 
-var noop = require('noop-fn');
-var Queue = require('tiny-queue');
-var immediate = require('immediate');
-var WebSQLResultSet = require('./WebSQLResultSet');
+const noop = require('noop-fn');
+const Queue = require('tiny-queue');
+const immediate = require('immediate');
+const WebSQLResultSet = require('./WebSQLResultSet');
 
 function errorUnhandled() {
   return true; // a non-truthy return indicates error was handled
@@ -32,34 +32,34 @@ function massageSQLResult(sql, insertId, rowsAffected, rows) {
     // ¯\_(ツ)_/¯
     insertId = void 0;
   }
-  return new WebSQLResultSet(insertId, rowsAffected, rows);
+  return WebSQLResultSet(insertId, rowsAffected, rows);
 }
 
 function SQLTask(sql, args, sqlCallback, sqlErrorCallback) {
-  this.sql = sql;
-  this.args = args;
-  this.sqlCallback = sqlCallback;
-  this.sqlErrorCallback = sqlErrorCallback;
+  const self = this ||{};
+  self.sql = sql;
+  self.args = args;
+  self.sqlCallback = sqlCallback;
+  self.sqlErrorCallback = sqlErrorCallback;
+  return self;
 }
 
 function runBatch(self, batch) {
-
   function onDone() {
     self._running = false;
     runAllSql(self);
   }
 
-  var readOnly = self._websqlDatabase._currentTask.readOnly;
-
+  const readOnly = self._websqlDatabase._currentTask.readOnly;
   self._websqlDatabase._db.exec(batch, readOnly, function (err, results) {
     /* istanbul ignore next */
     if (err) {
       self._error = err;
       return onDone();
     }
-    for (var i = 0; i < results.length; i++) {
-      var res = results[i];
-      var batchTask = batch[i];
+    for (let i = 0; i < results.length; i++) {
+      const res = results[i];
+      const batchTask = batch[i];
       if (res.error) {
         if (batchTask.sqlErrorCallback(self, res.error)) {
           // user didn't handle the error
@@ -98,7 +98,7 @@ function runAllSql(self) {
 }
 
 function executeSql(self, sql, args, sqlCallback, sqlErrorCallback) {
-  self._sqlQueue.push(new SQLTask(sql, args, sqlCallback, sqlErrorCallback));
+  self._sqlQueue.push(SQLTask(sql, args, sqlCallback, sqlErrorCallback));
   if (self._runningTimeout) {
     return;
   }
@@ -110,28 +110,27 @@ function executeSql(self, sql, args, sqlCallback, sqlErrorCallback) {
 }
 
 function WebSQLTransaction(websqlDatabase) {
-  this._websqlDatabase = websqlDatabase;
-  this._error = null;
-  this._complete = false;
-  this._runningTimeout = false;
-  this._sqlQueue = new Queue();
+  const self = this ||{};
+  self._websqlDatabase = websqlDatabase;
+  self._error = null;
+  self._complete = false;
+  self._runningTimeout = false;
+  self._sqlQueue = new Queue();
   if (!websqlDatabase._currentTask.readOnly) {
     // Since we serialize all access to the database, there is no need to
     // run read-only tasks in a transaction. This is a perf boost.
-    this._sqlQueue.push(new SQLTask('BEGIN;', [], noop, noop));
+    self._sqlQueue.push(SQLTask('BEGIN;', [], noop, noop));
   }
+  self.executeSql = function (sql, args, sqlCallback, sqlErrorCallback) {
+    args = Array.isArray(args) ? args : [];
+    sqlCallback = typeof sqlCallback === 'function' ? sqlCallback : noop;
+    sqlErrorCallback = typeof sqlErrorCallback === 'function' ? sqlErrorCallback : errorUnhandled;
+  
+    executeSql(self, sql, args, sqlCallback, sqlErrorCallback);
+  }
+  self._checkDone = function () {
+    runAllSql(self);
+  }
+  return self;
 }
-
-WebSQLTransaction.prototype.executeSql = function (sql, args, sqlCallback, sqlErrorCallback) {
-  args = Array.isArray(args) ? args : [];
-  sqlCallback = typeof sqlCallback === 'function' ? sqlCallback : noop;
-  sqlErrorCallback = typeof sqlErrorCallback === 'function' ? sqlErrorCallback : errorUnhandled;
-
-  executeSql(this, sql, args, sqlCallback, sqlErrorCallback);
-};
-
-WebSQLTransaction.prototype._checkDone = function () {
-  runAllSql(this);
-};
-
 module.exports = WebSQLTransaction;

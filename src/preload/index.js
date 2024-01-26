@@ -14,7 +14,6 @@ if(!appName || typeof appName !=='string'){
     console.error("Nom de l'application invalide!! Veuillez spécifier un nom valide d'application ",projectRoot," is electron project root")
 }
 const APP_NAME = appName?.toUpperCase() || "";
-const appUrl = require("../utils/appUrl")({appName});
 let backupPathField = "_e_backupDataPath";
 let cBackupPathField = "company"+backupPathField;
 const dbPathField = "_electron_DBPathField";
@@ -168,9 +167,10 @@ const setProgressBar = (progress)=>{
     if(progress < 0) progress = 0;
     ipcRenderer.send("electron-window-set-progressbar",progress);
 }
+
 const ELECTRON = {
     get openPouchDBDatabase(){
-        return require("./websql");
+        return require('./websql');
     },
     get appName(){
         return appName;
@@ -504,12 +504,12 @@ const ELECTRON = {
     },
     /**** permet de retourner l'url principale de l'application */
     get getAppUrl(){
-        return ()=>appUrl.url;
+        return ()=>ipcRenderer.sendSync("get-main-app-url");
     },
     get setAppUrl(){
         return (url)=>{
-            appUrl.url = url;
-            return appUrl.url;
+            ipcRenderer.sendSync("set-main-app-url",url);
+            return url;
         }
     },
     get getLoadedAppUrl(){

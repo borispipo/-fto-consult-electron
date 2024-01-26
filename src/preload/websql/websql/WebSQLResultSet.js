@@ -1,18 +1,21 @@
 'use strict';
 
 function WebSQLRows(array) {
-  this._array = array;
-  this.length = array.length;
+  const self = this || {};
+  self._array = array;
+  self.length = array.length;
+  self.item = function (i) {
+    return self._array[i];
+  };
+  return self;
 }
 
-WebSQLRows.prototype.item = function (i) {
-  return this._array[i];
-};
-
 function WebSQLResultSet(insertId, rowsAffected, rows) {
-  this.insertId = insertId;
-  this.rowsAffected = rowsAffected;
-  this.rows = new WebSQLRows(rows);
+  const self = this ||{};
+  self.insertId = insertId;
+  self.rowsAffected = rowsAffected;
+  self.rows = WebSQLRows(rows);
+  return self;
 }
 
 module.exports = WebSQLResultSet;
