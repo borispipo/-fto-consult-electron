@@ -1,19 +1,17 @@
 'use strict';
 
-var immediate = require('immediate');
-var argsarray = require('argsarray');
+const immediate = require('immediate');
+const argsarray = require('argsarray');
 
-var WebSQLDatabase = require('./websql/WebSQLDatabase');
+const WebSQLDatabase = require('./websql/WebSQLDatabase');
 
 function customOpenDatabase(SQLiteDatabase) {
-
   function createDb(dbName, dbVersion) {
     var sqliteDatabase = new SQLiteDatabase(dbName);
     return new WebSQLDatabase(dbVersion, sqliteDatabase);
   }
 
-  function openDatabase(args) {
-
+  function openDatabase(...args) {
     if (args.length < 4) {
       throw new Error('Failed to execute \'openDatabase\': ' +
         '4 arguments required, but only ' + args.length + ' present');
@@ -34,7 +32,6 @@ function customOpenDatabase(SQLiteDatabase) {
 
     return db;
   }
-
   return argsarray(openDatabase);
 }
 

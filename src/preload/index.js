@@ -17,7 +17,7 @@ const APP_NAME = appName?.toUpperCase() || "";
 const appUrl = require("../utils/appUrl")({appName});
 let backupPathField = "_e_backupDataPath";
 let cBackupPathField = "company"+backupPathField;
-let dbPathField = "_electron_DBPathField";
+const dbPathField = "_electron_DBPathField";
 
 const getPath = function(pathName){
     if(typeof pathName !=='string' || !pathName) return;
@@ -57,7 +57,7 @@ if(confPath && typeof confPath =="string"){
 
 const getDatabasePath = ()=>{
     const p = session.get(dbPathField);
-    if(fs.existsSync(p)){
+    if(fs.existsSync(p) && fs.lstatSync(p).isDirectory()){
         databasePath = p
     }
     if(!fs.existsSync(databasePath)){
@@ -168,10 +168,9 @@ const setProgressBar = (progress)=>{
     if(progress < 0) progress = 0;
     ipcRenderer.send("electron-window-set-progressbar",progress);
 }
-
 const ELECTRON = {
     get openPouchDBDatabase(){
-        return require('./websql');
+        return require("./websql");
     },
     get appName(){
         return appName;

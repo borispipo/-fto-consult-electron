@@ -1,6 +1,6 @@
 'use strict';
 
-var SQLiteDatabase = require('./sqlite/SQLiteDatabase');
-var customOpenDatabase = require('./custom');
+const SQLiteDatabase = require('./sqlite/SQLiteDatabase');
+const customOpenDatabase = require('./custom');
 
 module.exports = customOpenDatabase(SQLiteDatabase);
