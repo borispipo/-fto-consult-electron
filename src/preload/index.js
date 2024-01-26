@@ -46,6 +46,7 @@ if(typeof separator != 'string' || !separator){
 }
 const session = Session({appName});
 const confPath = getAppDataPath(appName);
+const hasNodeIntegration = ipcRenderer.sendSync("has-node-integration");
 if(confPath && typeof confPath =="string"){
     if(createDir(confPath)){
         ROOT_APP_FOLDER = confPath;
@@ -170,7 +171,10 @@ const setProgressBar = (progress)=>{
 
 const ELECTRON = {
     get openPouchDBDatabase(){
-        return require('./websql');
+        return hasNodeIntegration ? require("./websql/node") : require('./websql/isolation');
+    },
+    get hasNodeIntegration(){
+        return hasNodeIntegration;
     },
     get appName(){
         return appName;
@@ -581,10 +585,9 @@ ipcRenderer.on("main-window-blur",()=>{
     postMessage("WINDOW_BLUR");
 });
 
-const hasNodeIntegration = ipcRenderer.sendSync("has-node-integration");
 process.once('loaded', () => {
-    console.log(hasNodeIntegration," has node integration")
     if(hasNodeIntegration){
+        Object.defineProperties(window,{ELECTRON:{value:ELECTRON},isElectron:{value:x=>true}});
         window.ELECTRON = ELECTRON;
     } else{
         contextBridge.exposeInMainWorld('isElectron',true);

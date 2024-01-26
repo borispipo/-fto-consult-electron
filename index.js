@@ -117,9 +117,15 @@ function createBrowserWindow (options){
     options.icon = options.icon || iconPath;
     if(isMainWindow){
       mainNodeIntegration = options.webPreferences.nodeIntegration;
-      options.contextIsolation = options.webPreferences.nodeIntegration ? false : true;
+      options.webPreferences.contextIsolation = options.webPreferences.nodeIntegration ? false : true;
     }
+    const url = isValidUrl(options.url) || typeof options.url ==='string' && options.url.trim().startsWith("file://") ? options.url : undefined;
+    const file = options.file && typeof options.file ==="string" && fs.existsSync(path.resolve(options.file)) && options.file || null;
+    if(false && mainNodeIntegration && url && isMainWindow && (url !== pUrl && !(url.trim().startsWith("file://")))){
+      ///url = undefined; //lorsque le nodeIntegration est actif, aucun notre url est autorisé sauf les url locales
+    } 
     let window = new BrowserWindow(options);
+    window.mainElectronNodeIntegration = options.webPreferences.nodeIntegration;
     if(!menu){
         window.setMenu(null);
         window.removeMenu();
@@ -139,11 +145,6 @@ function createBrowserWindow (options){
         window = null;
     });
     window.webContents.on('context-menu',clipboadContextMenu);
-    const url = isValidUrl(options.url) || typeof options.url ==='string' && options.url.trim().startsWith("file://") ? options.url : undefined;
-    const file = options.file && typeof options.file ==="string" && fs.existsSync(path.resolve(options.file)) && options.file || null;
-    if(mainNodeIntegration && url && isMainWindow && (url !== pUrl && !(url.trim().startsWith("file://")))){
-      url = undefined; //lorsque le nodeIntegration est actif, aucun notre url est autorisé sauf les url locales
-    } 
     if(url){
       window.loadURL(url).then((u)=>{
         window.loadedUrl = url;
@@ -429,10 +430,6 @@ function createWindow () {
     const p = app.getPath(pathName);
     event.returnValue = p;
     return p;
-  });
-  ipcMain.on("has-node-integration",(event)=>{
-    event.returnValue = mainNodeIntegration;
-    return event.returnValue;
   });
   ipcMain.on("get-APP_PATH",(event,pathName)=>{
     event.returnValue = APP_PATH;
@@ -727,3 +724,7 @@ if(mainProcess.enableSingleInstance !== false){
         session.set(nodeProcessIDsessionName,currentProcessId);
     }
 }
+ipcMain.on("has-node-integration",(event)=>{
+  event.returnValue = mainWindow ? !!mainWindow?.mainElectronNodeIntegration : mainNodeIntegration;
+  return event.returnValue;
+});
