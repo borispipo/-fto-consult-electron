@@ -11,7 +11,7 @@ const {supportedFrameworks,script,options} = require("./program");
   const frameworkName = isNeutralino ? "neutralino" : "electron";
     const electronProjectRoot = path.resolve(projectRoot,frameworkName);
     const opts = Object.assign({},typeof options.opts =='function'? options.opts() : options);
-    let {out,arch,url,build,platform,import:packageImport,icon,framework} = opts;
+    let {out,arch,url,build,nodeIntegration,platform,import:packageImport,icon,framework} = opts;
     if(!framework || typeof framework !=='string' || !(framework in supportedFrameworks)){
         framework = "expo";
     }
@@ -66,7 +66,7 @@ const {supportedFrameworks,script,options} = require("./program");
        return new Promise((resolve,reject)=>{
           const cmdPrefix = isNeutralino ? `npx neu run` : `electron "${path.resolve(electronProjectRoot,"index.js")}"`
           return Promise.resolve(initPromise).finally(()=>{
-            const suffixes = isElectron ? `${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url ${url}`:''}` : ` -- ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url=${url}`:''}`
+            const suffixes = isElectron ? `${icon ? `--icon ${path.resolve(icon)}`:""} ${nodeIntegration && " --node-integration true"||""} ${isValidUrl(url)? ` --url ${url}`:''}` : ` -- ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url=${url}`:''}`
             cmd = `${cmdPrefix} ${suffixes}`; //--root ${electronProjectRoot}
             exec({
               cmd, 

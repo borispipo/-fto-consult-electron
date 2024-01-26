@@ -12,6 +12,7 @@ program.description('utilitaire cli pour la plateforme electron. NB : Le package
   //.option('-c, --config [dir]', 'le chemin (relatif au project root) du fichier de configuration de l\'application electron')
   //.option('-s, --splash [dir]', 'le chemin (relatif au project root) du fichier du splash screen de l\'application')
   .option('-o, --out [dir]', 'le chemin du répertoire qui contiendra les fichiers générés à l\'aide de la commande make : ; commande : make')
+  .option('--node-integration [boolean]', 'si l\'intégration node est autorisée')
   .option('-u, --url [url]', 'le lien url qui sera ouvert par l\'application; commande start')
   .option('-b, --build [boolean]', 'si ce flag est spécfifié alors l\'application sera compilée; combinée avec la commande start|package pour indiquer que l\'application sera à nouveau exportée ou pas.')
   .option('-a, --arch [architecture]', 'l\'architecture de la plateforme; Commande package')

@@ -1,5 +1,5 @@
 
-const {createDir,dataURL,FILE,base64:{isBase64},getAppDataPath,Session,uniqid,json:{isJSON,parseJSON},isNonNullString} = require("@fto-consult/node-utils");
+const {createDir,dataURL,FILE,base64:{isBase64},extendObj,getAppDataPath,Session,uniqid,json:{isJSON,parseJSON},isNonNullString} = require("@fto-consult/node-utils");
 const postMessage = require("../utils/postMessage");
 const { contextBridge, ipcRenderer, shell,Notification} = require('electron')
 const appInstance = require("./app/instance");
@@ -434,7 +434,7 @@ const ELECTRON = {
     },
     get createPDFWindow(){
         return (options)=>{
-            options = Object.assign({},options);
+            options = extendObj(true,{},{webPreferences:{nodeIntegration:false,contextIsolation : false}},options);
             options.modal = true;
             return createWindow(options);
         }
@@ -581,9 +581,15 @@ ipcRenderer.on("main-window-blur",()=>{
     postMessage("WINDOW_BLUR");
 });
 
+const hasNodeIntegration = ipcRenderer.sendSync("has-node-integration");
 process.once('loaded', () => {
-    contextBridge.exposeInMainWorld('isElectron',true);
-    contextBridge.exposeInMainWorld('ELECTRON',ELECTRON);
+    console.log(hasNodeIntegration," has node integration")
+    if(hasNodeIntegration){
+        window.ELECTRON = ELECTRON;
+    } else{
+        contextBridge.exposeInMainWorld('isElectron',true);
+        contextBridge.exposeInMainWorld('ELECTRON',ELECTRON);
+    } 
 });
 
 const mainRendererPath = path.join('processes',"renderer","index.js");

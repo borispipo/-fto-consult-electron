@@ -13,13 +13,14 @@ const iconName = `icon.${iconExtension}`;
 const logoIconName = `logo.${iconExtension}`;
 program
   .option('-u, --url <url>', 'L\'adresse url à ouvrir au lancement de l\'application')
+  .option('--node-integration <boolean>', 'Si l\'integration node est autorisée')
   //.option('-r, --root <projectRoot>', 'le chemin du project root de l\'application')
   .option('-l, --icon [iconPath]', 'le chemin vers le dossier des icones de l\'application : (Dans ce dossier, doit contenir une image icon.ico pour window, icon.incs pour mac et icon.png pour linux)')
   .parse();
 
 const programOptions = program.opts();
 const {url:pUrl,root:mainProjectRoot,icon} = programOptions;
-
+let mainNodeIntegration = !!programOptions.nodeIntegration;
 const distPath = path.join("dist",'index.html');
 const processCWD = process.cwd();
 const appPath = app.getAppPath();
@@ -74,8 +75,10 @@ const quit = ()=>{
 //app.disableHardwareAcceleration();
 
 function createBrowserWindow (options){
-    const {isMainWindow} = options;
     options = Object.assign({},options);
+    const {isMainWindow} = options;
+    delete options.isMainWindow;
+    const nIntegration = typeof options.nodeIntegration =="boolean"? options.nodeIntegration : isMainWindow ? mainNodeIntegration : false;
     const menu = options.menu;
     options.webPreferences = isObj(options.webPreferences)? options.webPreferences : {};
     options.webPreferences = {
@@ -83,7 +86,6 @@ function createBrowserWindow (options){
       webSecurity : true,
       plugin:false,
       autoHideMenuBar: true,
-      contextIsolation: true,
       contentSecurityPolicy: `
         default-src 'none';
         script-src 'self';
@@ -92,9 +94,10 @@ function createBrowserWindow (options){
         font-src 'self';
       `,
       ...options.webPreferences,
+      nodeIntegration: nIntegration,
+      contextIsolation : typeof options.contextIsolation =='boolean'? options.contextIsolation : isMainWindow ? !nIntegration : false,
       devTools: typeof options.webPreferences.devTools === 'boolean'? options.webPreferences.devTools : false,
       allowRunningInsecureContent: false,
-      nodeIntegration: false,
       preload: options.preload ? options.preload : null,
     }
     if(options.modal && !options.parent && mainWindow){
@@ -112,6 +115,10 @@ function createBrowserWindow (options){
        options = {...options,...opts};
     }
     options.icon = options.icon || iconPath;
+    if(isMainWindow){
+      mainNodeIntegration = options.webPreferences.nodeIntegration;
+      options.contextIsolation = options.webPreferences.nodeIntegration ? false : true;
+    }
     let window = new BrowserWindow(options);
     if(!menu){
         window.setMenu(null);
@@ -134,6 +141,9 @@ function createBrowserWindow (options){
     window.webContents.on('context-menu',clipboadContextMenu);
     const url = isValidUrl(options.url) || typeof options.url ==='string' && options.url.trim().startsWith("file://") ? options.url : undefined;
     const file = options.file && typeof options.file ==="string" && fs.existsSync(path.resolve(options.file)) && options.file || null;
+    if(mainNodeIntegration && url && isMainWindow && (url !== pUrl && !(url.trim().startsWith("file://")))){
+      url = undefined; //lorsque le nodeIntegration est actif, aucun notre url est autorisé sauf les url locales
+    } 
     if(url){
       window.loadURL(url).then((u)=>{
         window.loadedUrl = url;
@@ -419,6 +429,10 @@ function createWindow () {
     const p = app.getPath(pathName);
     event.returnValue = p;
     return p;
+  });
+  ipcMain.on("has-node-integration",(event)=>{
+    event.returnValue = mainNodeIntegration;
+    return event.returnValue;
   });
   ipcMain.on("get-APP_PATH",(event,pathName)=>{
     event.returnValue = APP_PATH;
