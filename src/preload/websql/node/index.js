@@ -21,5 +21,6 @@ module.exports = function openDatabase(dbName,dbVersion,description,size,callbac
       if(typeof onError =="function"){
         onError(e);
       }
+      return null;
     }
 }
