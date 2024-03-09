@@ -38,6 +38,9 @@ if(!iconPath && packageJSON.icon && typeof packageJSON.icon ==="string" ){
     iconPath = path.resolve(appPath,packageJSON.icon);
   }
 } 
+if(!iconPath){
+  iconPath = path.resolve(processCWD);
+}
 if(iconPath && fs.existsSync(path.resolve(iconPath,iconName))){
     iconPath = path.resolve(iconPath,iconName);
 } else if(iconPath && fs.existsSync(path.resolve(iconPath,logoIconName))){
