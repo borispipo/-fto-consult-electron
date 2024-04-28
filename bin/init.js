@@ -27,7 +27,7 @@ module.exports = ({projectRoot,electronProjectRoot,icon})=>{
         projectRootPackage.scripts = {
             "build" : `npx ${mainPackageName} build`,
             "start" : `npx ${mainPackageName} start`,
-            "run-dev" : `npx ${mainPackageName} start`,
+            "dev" : `npx ${mainPackageName} start`,
             "compile2start" : `npx ${mainPackageName} start --build`,
             //"start-electron" : `electron .`,
             //"start-electron-web" : `electron . --url http://localhost:19006`,

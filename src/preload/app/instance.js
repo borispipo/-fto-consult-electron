@@ -1,7 +1,7 @@
 const postMessage = require("../../utils/postMessage");
 const callbackRef = {current:null};
 const instanceRef = {current:null};
-const isValid = APP => APP && typeof APP =='object' && typeof APP.trigger =='function';
+const isValid = APP => false && APP && typeof APP =='object' && typeof APP.setTitle =='function';
 const setInstance = (APP)=>{
     if(isValid(APP)){
         instanceRef.current = APP;
@@ -21,8 +21,17 @@ module.exports = {
     },
     get get (){
         return (handler,force)=>{
-            return new Promise((resolve)=>{
+            if(typeof handler =="boolean"){
+                const t = force;
+                force = handler;
+                handler = typeof force =="function"? force : undefined;
+            }
+            return new Promise((resolve,reject)=>{
+                const timeoutRef = setTimeout(()=>{
+                    reject({message : "not valid expo-ui electron app"});
+                },500); //après une seconde si l'instance de l'application n'est pas récupérée alors on close l'application
                 callbackRef.current = (APP)=>{
+                    clearTimeout(timeoutRef);
                     callbackRef.current = undefined;
                     if(typeof handler =='function'){
                         handler(APP);
@@ -30,7 +39,7 @@ module.exports = {
                     instanceRef.current = APP;
                     resolve(APP);
                 };
-                if(force !== true && handler !==true && isValid(instanceRef.current)){
+                if(force !== true && isValid(instanceRef.current)){
                    return callbackRef.current(instanceRef.current);
                 }
                 postMessage("GET_APP_INSTANCE");

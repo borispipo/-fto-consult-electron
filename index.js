@@ -5,6 +5,7 @@ const {isValidUrl,Session,debounce,json:{isJSON,parseJSON}} = require("@fto-cons
 const {app, BrowserWindow, desktopCapturer,Tray,Menu,MenuItem,globalShortcut,systemPreferences,powerMonitor,ipcMain,dialog, nativeTheme} = require('electron')
 const isObj = x => x && typeof x =='object';
 const currentProcessId = require('process').pid || null;
+const exitTimeoutRef = {current:undefined};
 
 const isDarwin = process.platform =='darwin';
 const isWindow = process.platform =="win32";
@@ -264,11 +265,15 @@ function createWindow () {
    
     mainWindow.on('close', (e) => {
         if (mainWindow) {
-          if(typeof mainProcess.onMainWindowClose == "function"){
-            mainProcess.onMainWindowClose(mainWindow);
+          if(typeof mainProcess.onMainWindowClose == "function" && mainProcess.onMainWindowClose(mainWindow,{exit:askAndExitApp}) === false){
+              return;
           }
           e.preventDefault();
-          mainWindow.webContents.send('before-app-exit');
+          exitTimeoutRef.current = setTimeout(()=>{
+            clearTimeout(exitTimeoutRef.current);
+            askAndExitApp();    
+          },500);
+          mainWindow?.webContents.send("before-exit-app-from-main");
         }
     });
     
@@ -366,6 +371,9 @@ function createWindow () {
   
   ipcMain.on("restart-app",x =>{
     app.relaunch();
+  });
+  ipcMain.on("clear-exit-timeout",x =>{
+    clearTimeout(exitTimeoutRef.current);
   });
   let tray = null;
   ipcMain.on("update-system-tray",(event,opts)=>{
@@ -509,8 +517,8 @@ function createWindow () {
         mainWindow.webContents.focus();   
       }, 200);
     }
-  })
-  ipcMain.on('close-main-render-process', _ => {
+  });
+  const exitApp = _ => {
     if(mainWindow){
       mainWindow.destroy();
     }
@@ -519,7 +527,8 @@ function createWindow () {
       gc();
     }
     quit();
-  });
+  };
+  ipcMain.on('close-main-render-process', exitApp);
   
   const powerMonitorCallbackEvent = (action)=>{
     if(!mainWindow || !mainWindow.webContents) return;
@@ -731,3 +740,19 @@ ipcMain.on("has-node-integration",(event)=>{
   event.returnValue = mainWindow ? !!mainWindow?.mainElectronNodeIntegration : mainNodeIntegration;
   return event.returnValue;
 });
+
+const askAndExitApp = async (event)=>{
+  const { response } = await dialog.showMessageBox({
+    type: 'question',
+    buttons: ['Yes', 'No'],
+    title: 'Quittez l\'application',
+    message: 'Voulez vous vraiment quitter l\'application?',
+    //cancelId: 1
+  });
+  if(response == 0) {
+    exitApp();
+    return;
+  }
+  return;
+};
+ipcMain.on("exit-app-from-main",askAndExitApp);
