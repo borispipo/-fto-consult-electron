@@ -269,11 +269,12 @@ function createWindow () {
               return;
           }
           e.preventDefault();
-          exitTimeoutRef.current = setTimeout(()=>{
-            clearTimeout(exitTimeoutRef.current);
+          setTimeout(()=>{
             askAndExitApp();    
+            exitTimeoutRef.current = null;
           },500);
-          mainWindow?.webContents.send("before-exit-app-from-main");
+          exitTimeoutRef.current = true;
+          mainWindow?.webContents.send("before-app-exit");
         }
     });
     
@@ -373,7 +374,7 @@ function createWindow () {
     app.relaunch();
   });
   ipcMain.on("clear-exit-timeout",x =>{
-    clearTimeout(exitTimeoutRef.current);
+    exitTimeoutRef.current = null;
   });
   let tray = null;
   ipcMain.on("update-system-tray",(event,opts)=>{
@@ -742,6 +743,8 @@ ipcMain.on("has-node-integration",(event)=>{
 });
 
 const askAndExitApp = async (event)=>{
+  if(!exitTimeoutRef.current) return;
+  exitTimeoutRef.current = null;
   const { response } = await dialog.showMessageBox({
     type: 'question',
     buttons: ['Yes', 'No'],
@@ -755,4 +758,3 @@ const askAndExitApp = async (event)=>{
   }
   return;
 };
-ipcMain.on("exit-app-from-main",askAndExitApp);

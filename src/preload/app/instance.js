@@ -24,7 +24,7 @@ module.exports = {
             if(typeof handler =="boolean"){
                 const t = force;
                 force = handler;
-                handler = typeof force =="function"? force : undefined;
+                handler = typeof t =="function"? t : undefined;
             }
             return new Promise((resolve,reject)=>{
                 const timeoutRef = setTimeout(()=>{
@@ -33,10 +33,10 @@ module.exports = {
                 callbackRef.current = (APP)=>{
                     clearTimeout(timeoutRef);
                     callbackRef.current = undefined;
+                    instanceRef.current = APP;
                     if(typeof handler =='function'){
                         handler(APP);
                     }
-                    instanceRef.current = APP;
                     resolve(APP);
                 };
                 if(force !== true && isValid(instanceRef.current)){

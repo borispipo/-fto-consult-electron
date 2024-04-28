@@ -560,14 +560,10 @@ ELECTRON.getBackupPath();
 //require('v8-compile-cache');
 //require("v8").setFlagsFromString('--expose_gc'); 
 
-const askAndExitApp = () => {
-    return appInstance.get(true).then((instance)=>{
-        return postMessage("BEFORE_EXIT");
-    }).catch((e)=>{
-        ipcRenderer.sendSync("exit-app-from-main");
-    });
-};
-ipcRenderer.on('before-app-exit', askAndExitApp);
+ipcRenderer.on('before-app-exit', () => {
+    ipcRenderer.send("clear-exit-timeout");
+    return postMessage("BEFORE_EXIT");
+});
 
 ipcRenderer.on("main-app-suspended",()=>{
     postMessage({
@@ -781,10 +777,5 @@ FILE.saveText = (options)=>{
     options.mime = options.mimeType = typeof options.mime =="string" && options.mime || typeof mimeType =="string" && options.mimeType || "text/plain";
     return FILE.saveBinary(options);
 }
-
-ipcRenderer.on('before-exit-app-from-main', (event) => {
-    ipcRenderer.sendSync("clear-exit-timeout");
-    askAndExitApp();
-});
 
 require("./app/desktopCapturer")(ELECTRON);
