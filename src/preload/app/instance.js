@@ -1,7 +1,7 @@
 const postMessage = require("../../utils/postMessage");
 const callbackRef = {current:null};
 const instanceRef = {current:null};
-const isValid = APP => false && APP && typeof APP =='object' && typeof APP.setTitle =='function';
+const isValid = APP => APP && typeof APP =='object' && typeof APP.setTitle =='function';
 const setInstance = (APP)=>{
     if(isValid(APP)){
         instanceRef.current = APP;
