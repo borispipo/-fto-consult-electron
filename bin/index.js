@@ -6,28 +6,22 @@ const  {createDir,copy,exec,throwError,writeFile,isValidUrl,JSONFileManager} = r
 const projectRoot = path.resolve(process.cwd());
 const dir = path.resolve(__dirname);
 const {supportedFrameworks,script,options} = require("./program");
-  const isNeutralino = !!options.neutralino || process.env.isNeutralino || process.env.isNeutralinoScript;
-  const isElectron = !isNeutralino;
-  const frameworkName = isNeutralino ? "neutralino" : "electron";
+    const isElectron = true;
+    const frameworkName =  "electron";
     const electronProjectRoot = path.resolve(projectRoot,frameworkName);
     const opts = Object.assign({},typeof options.opts =='function'? options.opts() : options);
     let {out,arch,url,build,nodeIntegration,platform,import:packageImport,icon,framework} = opts;
     if(!framework || typeof framework !=='string' || !(framework in supportedFrameworks)){
         framework = "expo";
     }
-    if(isNeutralino){
-      process.env.isNeutralino = true;
-      process.env.isNeutralinoScript = true;    
-    } else {
-      process.env.isElectron = true;
-      process.env.isElectronScript = true;
-    }
+    process.env.isElectron = true;
+    process.env.isElectronScript = true;
     if(projectRoot == dir){
         throwError(`Invalid project root ${projectRoot}; project root must be different to ${dir}`);
     }
     const frameworkObj = supportedFrameworks[framework];
-    const isAppInitialized = require("./is-initialized")(electronProjectRoot,isNeutralino);
-    const buildOutDir = path.resolve(electronProjectRoot,isNeutralino?"resources":"dist");
+    const isAppInitialized = require("./is-initialized")(electronProjectRoot);
+    const buildOutDir = path.resolve(electronProjectRoot,"dist");
     const indexFile = path.resolve(buildOutDir,"index.html");
     const webBuildDir = path.resolve(projectRoot,frameworkObj.buildOutDir);
     const packagePath = path.resolve(projectRoot,"package.json");
@@ -46,16 +40,12 @@ const {supportedFrameworks,script,options} = require("./program");
         if(!isInitScript){
             console.log("initializing application ....");
         }
-        if(isElectron){
-          initPromise =  require("./init")({
-             projectRoot,
-             electronDir,
-             electronProjectRoot,
-             icon,
-          });
-        } else {
-          initPromise = exec({cmd:`npx @fto-consult/neut create neutralino`});
-        }
+        initPromise =  require("./init")({
+          projectRoot,
+          electronDir,
+          electronProjectRoot,
+          icon,
+        });
         if(isInitScript) return initPromise;
     }
     const outDir = out && path.dirname(out) && path.resolve(path.dirname(out),frameworkName) || path.resolve(electronProjectRoot,"bin")
@@ -64,13 +54,13 @@ const {supportedFrameworks,script,options} = require("./program");
     }
     const start = x=>{
        return new Promise((resolve,reject)=>{
-          const cmdPrefix = isNeutralino ? `npx neu run` : `electron "${path.resolve(electronProjectRoot,"index.js")}"`
+          const cmdPrefix = `electron "${path.resolve(electronProjectRoot,"index.js")}"`
           return Promise.resolve(initPromise).finally(()=>{
             const suffixes = isElectron ? `${icon ? `--icon ${path.resolve(icon)}`:""} ${nodeIntegration && " --node-integration true"||""} ${isValidUrl(url)? ` --url ${url}`:''}` : ` -- ${icon ? `--icon ${path.resolve(icon)}`:""} ${isValidUrl(url)? ` --url=${url}`:''}`
             cmd = `${cmdPrefix} ${suffixes}`; //--root ${electronProjectRoot}
             exec({
               cmd, 
-              projectRoot:isNeutralino?electronProjectRoot:projectRoot,
+              projectRoot,
             });
           })
       });
@@ -84,7 +74,7 @@ const {supportedFrameworks,script,options} = require("./program");
             if(fs.existsSync(webBuildDir)){
                   return copy(webBuildDir,buildOutDir).catch(reject).then(resolve);
               } else {
-                reject("dossier web-build exporté par "+frameworkName+" innexistant!!");
+                reject("dossier dist exporté par "+frameworkName+" innexistant!!");
               }
           }
           if(!url && (build || script ==="build" || !fs.existsSync(path.resolve(webBuildDir,"index.html")))){

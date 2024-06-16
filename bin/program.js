@@ -1,8 +1,8 @@
 const { program } = require('commander');
 const supportedFrameworks = {
   expo : {
-      buildCmd : "npx expo export:web",
-      buildOutDir : "web-build",
+      buildCmd : "npx expo export -p web",
+      buildOutDir : "dist",
   },
 }
 
