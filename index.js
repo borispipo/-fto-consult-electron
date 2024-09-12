@@ -1,6 +1,7 @@
 const { program } = require('commander');
 const path = require("path");
 const fs = require("fs");
+const { app } = require('electron');
 const {isValidUrl,Session,debounce,json:{isJSON,parseJSON}} = require("@fto-consult/node-utils");
 const {app, BrowserWindow, desktopCapturer,Tray,Menu,MenuItem,globalShortcut,systemPreferences,powerMonitor,ipcMain,dialog, nativeTheme} = require('electron')
 const isObj = x => x && typeof x =='object';
@@ -12,6 +13,8 @@ const isWindow = process.platform =="win32";
 const iconExtension = isWindow ? "ico" :  isDarwin ? "incs" : "png";
 const iconName = `icon.${iconExtension}`;
 const logoIconName = `logo.${iconExtension}`;
+app.commandLine?.appendSwitch('disable-software-rasterizer');
+app.commandLine?.appendSwitch('disable-gpu');
 program
   .option('-u, --url <url>', 'L\'adresse url à ouvrir au lancement de l\'application')
   .option('--node-integration <boolean>', 'Si l\'integration node est autorisée')
