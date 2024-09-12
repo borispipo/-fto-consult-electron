@@ -109,7 +109,7 @@ const {supportedFrameworks,script,options} = require("./program");
             case "package" :
               if(packageImport || opts.import){ //on importe le projet existant electron forge, @see : https://www.electronforge.io/import-existing-project
                 console.log("importing electron forge existing project....");
-                cmd = "npm install --save-dev @electron-forge/cli";
+                cmd = "npm install -D @electron-forge/cli @electron-forge/plugin-webpack";
                 return exec({cmd,projectRoot:electronProjectRoot}).finally(()=>{
                   cmd = `npm exec --package=@electron-forge/cli -c "electron-forge import"`;
                   return exec({cmd,projectRoot:electronProjectRoot}).then(()=>{
